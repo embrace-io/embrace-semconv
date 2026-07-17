@@ -40,6 +40,11 @@ scripts/generate-docs.sh  # regenerate docs/ from the model
 scripts/package.sh        # produce publication manifest and resolved registry under build/package/
 ```
 
+The markdown under `docs/` is generated output that is committed to the repo. If you change
+anything under `model/` or `templates/` (or bump the pinned weaver version), rerun
+`scripts/generate-docs.sh` and commit the regenerated files together with your change — CI
+fails any PR whose committed docs don't match what the model and templates generate.
+
 See [RELEASING.md](RELEASING.md) for how versions are cut and published.
 
 ## Consuming this registry
