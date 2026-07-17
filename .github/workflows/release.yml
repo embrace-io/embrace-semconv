@@ -36,14 +36,10 @@ jobs:
           fi
           echo "Tag '${TAG}' is new."
 
-      - name: Read pinned weaver version
-        id: weaver-version
-        run: echo "version=$(sed -n 's/^WEAVER_VERSION=v\{0,1\}//p' versions.env)" >> "$GITHUB_OUTPUT"
-
       - name: Install Weaver
-        uses: open-telemetry/weaver/.github/actions/setup-weaver@f8e1b42fbd1e09df5263c26b7df6011eaafd454d
-        with:
-          version: '${{ steps.weaver-version.outputs.version }}'
+        run: |
+          scripts/install-weaver.sh "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Validate registry
         run: scripts/check.sh
