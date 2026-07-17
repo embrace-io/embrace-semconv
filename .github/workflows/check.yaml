@@ -43,14 +43,36 @@ jobs:
 
       - name: Check committed docs are in sync
         run: |
-          if ! git diff --exit-code -- docs/; then
-            echo "FAIL: committed docs are out of sync. Run scripts/generate-docs.sh and commit the changes."
-            exit 1
-          fi
           untracked=$(git ls-files --others --exclude-standard -- docs/)
-          if [ -n "$untracked" ]; then
-            echo "FAIL: untracked generated files under docs/:"
-            echo "$untracked"
+          if ! git diff --exit-code -- docs/ || [ -n "$untracked" ]; then
+            echo "::error::Committed docs under docs/ are out of sync with model/ and templates/. Run scripts/generate-docs.sh and commit the result with your change."
+            {
+              echo "## Docs drift detected"
+              echo ""
+              echo "The committed markdown under \`docs/\` does not match what \`model/\` and \`templates/\` generate."
+              echo "Regenerate the docs and commit them together with your change:"
+              echo ""
+              echo '```bash'
+              echo "scripts/install-weaver.sh   # once, if weaver is not on PATH"
+              echo "scripts/generate-docs.sh"
+              echo "git add docs/"
+              echo '```'
+              if [ -n "$untracked" ]; then
+                echo ""
+                echo "Untracked generated files:"
+                echo ""
+                echo '```'
+                echo "$untracked"
+                echo '```'
+              fi
+              echo ""
+              echo "<details><summary>Diff against committed docs</summary>"
+              echo ""
+              echo '```diff'
+              git diff -- docs/
+              echo '```'
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
           echo "OK: committed docs are up to date"
