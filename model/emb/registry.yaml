@@ -1,0 +1,26 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: registry.embrace.emb
+    visibility: public
+    stability: development
+    brief: >
+      Embrace-internal attributes in the `emb` namespace.
+    attributes:
+      - ref: emb.user_session_id
+      - ref: emb.session_part_id
+
+attributes:
+  - key: emb.user_session_id
+    type: string
+    stability: development
+    brief: >
+      UUID identifying the user session that the telemetry was recorded in.
+    examples: ["3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"]
+  - key: emb.session_part_id
+    type: string
+    stability: development
+    brief: >
+      UUID identifying the session part that the telemetry was recorded in. A user
+      session is composed of one or more consecutive session parts.
+    examples: ["3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"]

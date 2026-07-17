@@ -1,0 +1,31 @@
+templates:
+  - pattern: attributes.md.j2
+    filter: >
+      .registry.attributes
+      | map(select(has("provenance")))
+      | group_by(.key | split(".") | .[0])
+      | map({ root_namespace: (.[0].key | split(".") | .[0]),
+              attributes: (. | unique_by(.key)) })
+    application_mode: each
+    file_name: "attributes/{{ctx.root_namespace}}.md"
+  - pattern: events.md.j2
+    filter: >
+      .registry.events
+      | map(select(has("provenance")))
+      | group_by(.name | split(".") | .[0])
+      | map({ root_namespace: (.[0].name | split(".") | .[0]),
+              events: . })
+    application_mode: each
+    file_name: "events/{{ctx.root_namespace}}.md"
+  - pattern: readme.md.j2
+    filter: >
+      { attribute_namespaces: (.registry.attributes
+          | map(select(has("provenance")))
+          | group_by(.key | split(".") | .[0])
+          | map({ name: (.[0].key | split(".") | .[0]), count: length })),
+        event_namespaces: (.registry.events
+          | map(select(has("provenance")))
+          | group_by(.name | split(".") | .[0])
+          | map({ name: (.[0].name | split(".") | .[0]), count: length })) }
+    application_mode: single
+    file_name: README.md
