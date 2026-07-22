@@ -30,8 +30,7 @@ jobs:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" >/dev/null 2>&1; then
-            echo "Tag '${TAG}' already exists. Tags are immutable; bump the version"
-            echo "segment of schema_url in model/manifest.yaml and merge that first."
+            echo "::error::Tag '${TAG}' already exists. This workflow releases whatever version model/manifest.yaml declares. Change the version there and rerun."
             exit 1
           fi
           echo "Tag '${TAG}' is new."
