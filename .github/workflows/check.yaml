@@ -19,10 +19,16 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Install Weaver
+      - name: Read pinned weaver version
+        id: weaver
         run: |
-          scripts/install-weaver.sh "$HOME/.local/bin"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          source versions.env
+          echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install Weaver
+        uses: ./.github/actions/setup-weaver
+        with:
+          version: ${{ steps.weaver.outputs.version }}
 
       - name: Validate registry (schema + shared policies)
         run: scripts/check.sh
@@ -33,10 +39,16 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Install Weaver
+      - name: Read pinned weaver version
+        id: weaver
         run: |
-          scripts/install-weaver.sh "$HOME/.local/bin"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          source versions.env
+          echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install Weaver
+        uses: ./.github/actions/setup-weaver
+        with:
+          version: ${{ steps.weaver.outputs.version }}
 
       - name: Regenerate docs
         run: scripts/generate-docs.sh
@@ -53,7 +65,7 @@ jobs:
               echo "Regenerate the docs and commit them together with your change:"
               echo ""
               echo '```bash'
-              echo "scripts/install-weaver.sh   # once, if weaver is not on PATH"
+              echo ".github/actions/setup-weaver/install-weaver.sh   # once, if weaver is not on PATH"
               echo "scripts/generate-docs.sh"
               echo "git add docs/"
               echo '```'

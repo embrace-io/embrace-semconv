@@ -36,10 +36,16 @@ jobs:
           fi
           echo "Tag '${TAG}' is new."
 
-      - name: Install Weaver
+      - name: Read pinned weaver version
+        id: weaver
         run: |
-          scripts/install-weaver.sh "$HOME/.local/bin"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          source versions.env
+          echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install Weaver
+        uses: ./.github/actions/setup-weaver
+        with:
+          version: ${{ steps.weaver.outputs.version }}
 
       - name: Validate registry
         run: scripts/check.sh

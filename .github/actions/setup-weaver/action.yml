@@ -1,0 +1,19 @@
+name: Setup Weaver
+description: >
+  Installs the pinned OpenTelemetry Weaver CLI and puts it on PATH.
+  Usable from any repo via `uses: embrace-io/embrace-semconv/.github/actions/setup-weaver@<ref>`.
+
+inputs:
+  version:
+    description: Weaver version to install, e.g. v0.24.2 (the leading "v" is optional).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install weaver
+      shell: bash
+      run: |
+        install_dir="${HOME}/.local/bin"
+        WEAVER_VERSION="${{ inputs.version }}" bash "${{ github.action_path }}/install-weaver.sh" "${install_dir}"
+        echo "${install_dir}" >> "${GITHUB_PATH}"

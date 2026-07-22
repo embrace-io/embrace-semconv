@@ -13,4 +13,4 @@ that are no longer maintained and provide documentation regarding what to use in
 
 Scripts expect the [weaver](https://github.com/open-telemetry/weaver) binary on `PATH`, at the version pinned
 in [`versions.env`](versions.env), with network access to fetch pinned dependency registries.
-Run `scripts/install-weaver.sh` to install the pinned version.
+Run `.github/actions/setup-weaver/install-weaver.sh` to install the pinned version.
