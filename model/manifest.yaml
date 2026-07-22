@@ -1,6 +1,6 @@
 name: embrace
 description: Federated semantic conventions for the Embrace SDK (the `emb` namespace).
-schema_url: https://embrace.io/schemas/embrace/0.1.0
+schema_url: https://embrace.io/schemas/embrace/0.2.0
 stability: development
 dependencies:
   - schema_url: https://opentelemetry.io/schemas/1.43.0
