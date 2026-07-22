@@ -20,12 +20,17 @@ a new version when they are updated.
 
 ## How to release
 
+Releasing is deliberately a manual two-step process: the workflow never bumps the
+version itself and instead creates a new tag based on whatever version
+`model/manifest.yaml` declares. Running the release workflow will fail if
+the version in the file was not changed since the last release.
+
 1. Land the model changes on `main` and regenerate markdown files.
 2. In a follow-up PR, bump the version segment of `schema_url` in
-   `model/manifest.yaml` (e.g. `0.1.0` → `0.2.0`).
+   `model/manifest.yaml` (e.g. `1.1.0` → `1.2.0`).
 3. Run the **Release** workflow from the Actions tab
    (`workflow_dispatch`). It will:
-   - derive the tag from the manifest. This will fail if the tag already exists;
+   - derive the tag from the manifest
    - validate the registry (`scripts/check.sh`), including the shared policy
      pack
    - package the publication artifacts (`scripts/package.sh`);
