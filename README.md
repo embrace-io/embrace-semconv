@@ -28,7 +28,7 @@ scripts/                  validation / resolution / docs generation
 ## Getting started
 
 [Weaver](https://github.com/open-telemetry/weaver) is not available via package managers like
-Homebrew, but you can install it by running `scripts/install-weaver.sh`, which downloads the release
+Homebrew, but you can install it by running `.github/actions/setup-weaver/install-weaver.sh`, which downloads the release
 binary pinned in [`versions.env`](versions.env) and installs it to `~/.local/bin` (pass a different
 directory as the first argument if preferred). To update it, change `WEAVER_VERSION` in
 `versions.env` and rerun the script. The same file pins the upstream semantic-conventions tag and the

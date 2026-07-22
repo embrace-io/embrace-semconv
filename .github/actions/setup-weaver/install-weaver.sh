@@ -1,16 +1,26 @@
 #!/usr/bin/env bash
-# Installs the weaver release pinned in versions.env for the host platform.
+# Installs the pinned OpenTelemetry Weaver CLI for the host platform.
 #
-# Downloads the official release binary from GitHub, verifies its sha256 checksum,
-# and installs it to ~/.local/bin (or the directory given as the first argument).
-# To update weaver, bump WEAVER_VERSION in versions.env and rerun this script.
+# The version comes from $WEAVER_VERSION when set (the setup-weaver action passes it);
+# otherwise it is read from versions.env at the root of this repo checkout. Downloads the
+# official release binary, verifies its sha256 checksum, and installs it to ~/.local/bin
+# (or the directory given as the first argument).
 #
-# Usage: scripts/install-weaver.sh [install-dir]
+# Usage: .github/actions/setup-weaver/install-weaver.sh [install-dir]
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# shellcheck source=../versions.env
-source "${REPO_ROOT}/versions.env"
+if [[ -z "${WEAVER_VERSION:-}" ]]; then
+  repo_root="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel 2>/dev/null || true)"
+  if [[ -n "${repo_root}" && -f "${repo_root}/versions.env" ]]; then
+    # shellcheck source=/dev/null
+    source "${repo_root}/versions.env"
+  fi
+fi
+if [[ -z "${WEAVER_VERSION:-}" ]]; then
+  echo "error: WEAVER_VERSION is not set and versions.env could not be found." >&2
+  echo "Pass WEAVER_VERSION=<version> or run from a checkout of this repo." >&2
+  exit 1
+fi
 VERSION="${WEAVER_VERSION#v}"
 INSTALL_DIR="${1:-${HOME}/.local/bin}"
 

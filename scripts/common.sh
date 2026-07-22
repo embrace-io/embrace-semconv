@@ -9,7 +9,7 @@ PINNED_WEAVER_VERSION="${WEAVER_VERSION#v}"
 
 if ! command -v weaver >/dev/null 2>&1; then
   echo "error: weaver not found on PATH." >&2
-  echo "Run scripts/install-weaver.sh to install the pinned version, or download a" >&2
+  echo "Run .github/actions/setup-weaver/install-weaver.sh to install the pinned version, or download a" >&2
   echo "release binary from https://github.com/open-telemetry/weaver/releases and" >&2
   echo "make sure it is on PATH." >&2
   exit 1

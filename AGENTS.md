@@ -24,11 +24,11 @@ model/
   manifest.yaml        # registry name (embrace), schema_url, dependencies (core OTel)
   emb/registry.yaml    # emb.* attribute definitions + the attribute_group that bundles them
 templates/registry/markdown/   # doc-generation templates (this repo emits docs, not code)
-scripts/               # check.sh, generate-docs.sh, install-weaver.sh, package.sh, common.sh
+scripts/               # check.sh, generate-docs.sh, package.sh, common.sh
 policies/              # local weaver policy (public attribute groups)
 docs/                  # GENERATED markdown — do not hand-edit; regenerate
 versions.env           # pinned weaver + core-semconv + policy versions
-.github/workflows/     # check.yaml (validation + docs-drift), release.yml
+.github/               # workflows/ (check.yaml, release.yml) + actions/setup-weaver/ (weaver installer)
 ```
 
 ## Mental model: how federated weaver generation works
@@ -79,7 +79,7 @@ them as `events:` blocks that `ref` attributes, the same way groups do.
 
 ## Workflow — run before committing
 
-Weaver is pinned in `versions.env`; install it with `scripts/install-weaver.sh`, or ensure the
+Weaver is pinned in `versions.env`; install it with `.github/actions/setup-weaver/install-weaver.sh`, or ensure the
 pinned version is on `PATH` (`common.sh` warns on a version mismatch).
 
 - **`scripts/check.sh`** — validates the schema, resolves the core-OTel dependency, and runs the
