@@ -5,7 +5,7 @@ description: >
 
 inputs:
   version:
-    description: Weaver version to install, e.g. v0.24.2 (the leading "v" is optional).
+    description: Weaver version to install, e.g. v0.26.1 (the leading "v" is optional).
     required: true
 
 runs:
