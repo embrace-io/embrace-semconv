@@ -4,7 +4,10 @@
 
 The canonical, cross-platform [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/concepts/semantic-conventions/)
 registry for Embrace's `emb.*` namespace. It is a **federated** registry (OTEP 4815, weaver
-`definition/2`) that depends on the core OTel semantic conventions.
+`definition/2`) that depends on the core OTel semantic conventions. It will also depend on the
+[client-side semantic conventions](https://github.com/open-telemetry/semantic-conventions-client-side)
+registry once that publishes a release. It offers the same make targets as the other OpenTelemetry
+semantic-convention registries.
 
 It is the single source of truth for Embrace attribute **definitions**. Embrace SDKs (Android first,
 others to follow) consume it as a dependency and generate their own language-specific constants from
@@ -21,15 +24,32 @@ starter set of attributes and will expand over time.
 
 ```
 model/
-  manifest.yaml        # registry name (embrace), schema_url, dependencies (core OTel)
+  manifest.yaml        # registry identity + version (schema_url), dependencies (core OTel)
   emb/registry.yaml    # emb.* attribute definitions + the attribute_group that bundles them
 templates/registry/markdown/   # doc-generation templates (this repo emits docs, not code)
-scripts/               # check.sh, generate-docs.sh, package.sh, common.sh
+templates_test/        # fixture registry + golden output for the template regression test
 policies/              # local weaver policy (public attribute groups)
+policies_test/         # OPA unit tests for policies/
 docs/                  # GENERATED markdown — do not hand-edit; regenerate
-versions.env           # pinned weaver + core-semconv + policy versions
-.github/               # workflows/ (check.yaml, release.yml) + actions/setup-weaver/ (weaver installer)
+Makefile               # validation, docs, tests, packaging (`make help`); CI runs its targets
+versions.env           # pinned weaver + OPA + shared policy pack versions
+.github/               # workflows/ (check.yaml, release.yml), actions/ (setup-weaver, setup-opa,
+                       # assert-no-drift)
 ```
+
+## Dependencies
+
+- **Identity is `schema_url`.** Weaver splits it at the last `/` into the registry's name and
+  version; there is no `name:` field. Every dependency is `schema_url` + `registry_path`, and the
+  two must change together — weaver does not check they agree, so `make check-policies` does for
+  any `registry_path` pinned to a release tag.
+- **Core OTel** is pinned to a release tag in `model/manifest.yaml`.
+- Weaver resolves **one** version per registry for the whole dependency graph, only warning when
+  requests differ. `make check-policies` turns that warning into a failure, so when a dependency
+  that itself depends on core is added (e.g. client-side), keep this repo's core pin in lockstep
+  with it.
+- A registry sees only what its **direct** dependencies define: core attributes would not be
+  reachable through client-side, so core stays a direct dependency even once client-side is added.
 
 ## Mental model: how federated weaver generation works
 
@@ -59,11 +79,14 @@ your own groups:
 
 ```yaml
 dependencies:
-  - name: embrace
-    registry_path: https://github.com/embrace-io/embrace-semconv@<tag>[model]
+  - schema_url: https://embrace.io/schemas/embrace/<version>
+    registry_path: https://github.com/embrace-io/embrace-semconv@v<version>[model]
 ```
 
-Pin an exact tag, never a branch. See `README.md` for the full consuming guide.
+Pin an exact tag, never a branch. `schema_url` and `registry_path` name the same release and must
+move together: weaver fetches from `registry_path` but identifies the dependency (for version
+conflicts and provenance) by `schema_url`, and does not check that they agree. See `README.md` for
+the full consuming guide.
 
 ## Extending it (add or change an attribute)
 
@@ -79,22 +102,27 @@ them as `events:` blocks that `ref` attributes, the same way groups do.
 
 ## Workflow — run before committing
 
-Weaver is pinned in `versions.env`; install it with `.github/actions/setup-weaver/install-weaver.sh`, or ensure the
-pinned version is on `PATH` (`common.sh` warns on a version mismatch).
+Weaver and OPA are pinned in `versions.env`; install them with `make install-weaver` /
+`make install-opa`, or ensure the pinned versions are on `PATH` (the Makefile warns on a mismatch).
 
-- **`scripts/check.sh`** — validates the schema, resolves the core-OTel dependency, and runs the
+- **`make check-policies`** — validates the schema, resolves the dependencies, and runs the
   shared + local policies. Must pass.
-- **`scripts/generate-docs.sh`** — regenerates `docs/`. Docs are committed and CI fails on drift, so
+- **`make generate-all`** — regenerates `docs/`. Docs are committed and CI fails on drift, so
   regenerate and commit them together. **Never hand-edit `docs/`.**
+- **`make test`** — `make test-templates` (renders the fixture under `templates_test/` and diffs it
+  against `templates_test/golden/`) and `make test-policies` (OPA unit tests). After an intended
+  template change, refresh the golden files with `make update-golden` and review the diff.
 
-These two commands are exactly the jobs in `.github/workflows/check.yaml`, so running both locally
-predicts CI. Standard hygiene otherwise: commit only when asked, keep messages focused.
+These are exactly the jobs in `.github/workflows/check.yaml`, so running them locally predicts CI.
+Standard hygiene otherwise: commit only when asked, keep messages focused.
 
 ## Releasing
 
 Bump the version segment of `schema_url` in `model/manifest.yaml`, then tag — see `RELEASING.md`.
 Consumers pin exact tags and **tags are immutable**: fix a bad release with a new version, never a
-re-tag.
+re-tag. Only the version segment ever moves: the rest of `schema_url`
+(`embrace.io/schemas/embrace`) is the registry's identity, and changing it makes a different
+registry, not a new version.
 
 ## Pointers
 

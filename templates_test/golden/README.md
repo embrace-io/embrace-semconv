@@ -9,4 +9,8 @@ references from the core OpenTelemetry registry are documented
 
 ## Attributes
 
-- [`emb`](attributes/emb.md) — 2 attributes
+- [`fixture`](attributes/fixture.md) — 3 attributes
+
+## Events
+
+- [`fixture`](events/fixture.md) — 1 event

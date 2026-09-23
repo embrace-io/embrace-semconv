@@ -1,8 +1,13 @@
+/.build/
 /build/
 
 # Editor / IDE
 /.idea/
 /.vscode/
 
+# Machine-local agent state
+/.claude/settings.local.json
+
 # macOS
 .DS_Store
+Thumbs.db

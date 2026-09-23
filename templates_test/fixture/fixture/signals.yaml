@@ -1,0 +1,11 @@
+file_format: definition/2
+
+# The docs templates render attributes and events
+events:
+  - name: fixture.event
+    requirement_level: recommended
+    stability: development
+    brief: A fixture event.
+    attributes:
+      - ref: fixture.str
+        requirement_level: recommended
