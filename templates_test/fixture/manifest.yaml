@@ -1,0 +1,8 @@
+# Test fixture registry for the docs template regression test
+
+schema_url: https://embrace.io/schemas/embrace-fixture-dev/0.0.0-dev
+description: Fixture registry exercising the attribute and event docs templates.
+stability: development
+dependencies:
+  - schema_url: https://opentelemetry.io/schemas/1.44.0
+    registry_path: https://github.com/open-telemetry/semantic-conventions@v1.44.0[model]

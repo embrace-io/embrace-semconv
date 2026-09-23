@@ -24,9 +24,12 @@ model/                    semantic convention definitions (the source of truth)
   manifest.yaml           registry identity and version (schema_url) and pinned dependencies
   emb/registry.yaml       emb.* attribute definitions and the attribute group that exports them
 templates/                weaver Jinja2 templates for docs generation
+templates_test/           fixture registry + golden output for the template regression test
+policies/                 local rego policies run by `make check-policies`
+policies_test/            OPA unit tests for those policies
 docs/                     generated markdown
-Makefile                  validation / docs generation / packaging (`make help`)
-versions.env              pinned weaver and shared policy pack versions
+Makefile                  validation / docs generation / tests / packaging (`make help`)
+versions.env              pinned weaver, OPA and shared policy pack versions
 ```
 
 ## Dependencies
@@ -40,14 +43,16 @@ version in `model/manifest.yaml` in lockstep with it.
 
 ## Getting started
 
-[Weaver](https://github.com/open-telemetry/weaver) is not available via package managers like
-Homebrew, but `make install-weaver` downloads the release binary pinned in
-[`versions.env`](versions.env) and installs it to `~/.local/bin`. To update it, change
-`WEAVER_VERSION` in `versions.env` and rerun the target.
+[Weaver](https://github.com/open-telemetry/weaver) and [OPA](https://www.openpolicyagent.org/)
+are not available via package managers like Homebrew at the pinned versions, but `make
+install-weaver` and `make install-opa` download the release binaries pinned in
+[`versions.env`](versions.env) and install them to `~/.local/bin`. To update either, change its
+version in `versions.env` and rerun the target.
 
 ```bash
 make check-policies   # validate the model: dependency resolution + shared OTel and local policies
 make generate-all     # regenerate docs/ from the model
+make test             # template regression test + rego policy unit tests
 make package          # produce publication manifest and resolved registry under .build/package/
 make help             # list every target
 ```
@@ -58,6 +63,9 @@ The markdown under `docs/` is generated output that is committed to the repo. If
 anything under `model/` or `templates/` (or bump the pinned weaver version), rerun
 `make generate-all` and commit the regenerated files together with your change — CI
 fails any PR whose committed docs don't match what the model and templates generate.
+
+If you change a template on purpose, `make update-golden` refreshes `templates_test/golden/`;
+review that diff before committing it.
 
 See [RELEASING.md](RELEASING.md) for how versions are cut and published.
 

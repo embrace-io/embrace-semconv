@@ -14,10 +14,13 @@ concurrency:
 
 jobs:
   check:
+    name: Check Registry
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Read pinned weaver version
         id: weaver
@@ -34,10 +37,13 @@ jobs:
         run: make check-policies
 
   docs-drift:
+    name: Check Docs Drift
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Read pinned weaver version
         id: weaver
@@ -63,12 +69,62 @@ jobs:
             make generate-all
             git add docs/
 
-  # Aggregate gate for branch protection: require only this job.
+  templates:
+    name: Check Templates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Read pinned weaver version
+        id: weaver
+        run: |
+          source versions.env
+          echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install Weaver
+        uses: ./.github/actions/setup-weaver
+        with:
+          version: ${{ steps.weaver.outputs.version }}
+
+      - name: Check doc templates against golden fixture output
+        run: make test-templates
+
+  policies:
+    name: Check Policies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Read pinned OPA version
+        id: opa
+        run: |
+          source versions.env
+          echo "version=$OPA_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install OPA
+        uses: ./.github/actions/setup-opa
+        with:
+          version: ${{ steps.opa.outputs.version }}
+
+      - name: Unit-test rego policies
+        run: make test-policies
+
+  # Aggregate gate for branch protection: require only this job. Branch protection on main requires
+  # a check named `required-status-check`, so keep this job's name identical to its id.
   required-status-check:
+    name: required-status-check
     if: always()
     needs:
       - check
       - docs-drift
+      - templates
+      - policies
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

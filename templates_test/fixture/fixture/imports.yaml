@@ -1,0 +1,9 @@
+file_format: definition/2
+
+# Imported definitions must not appear in the generated docs. Import both kinds the templates
+# render, so each provenance filter has something to filter out.
+imports:
+  attribute_groups:
+    - "registry.session"
+  events:
+    - "session.*"

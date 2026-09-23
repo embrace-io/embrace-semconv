@@ -6,13 +6,15 @@ Reference documentation generated from the semantic convention definitions under
 `model/`. Only conventions defined by this registry are listed; attributes it
 references from the core OpenTelemetry registry are documented
 [upstream](https://github.com/open-telemetry/semantic-conventions/tree/main/docs/registry).
-
+{% if ctx.attribute_namespaces | length > 0 %}
 ## Attributes
 {% for ns in ctx.attribute_namespaces %}
 - [`{{ ns.name }}`](attributes/{{ ns.name }}.md) — {{ ns.count }} attribute{% if ns.count != 1 %}s{% endif %}
 {%- endfor %}
-
+{% endif %}
+{%- if ctx.event_namespaces | length > 0 %}
 ## Events
 {% for ns in ctx.event_namespaces %}
 - [`{{ ns.name }}`](events/{{ ns.name }}.md) — {{ ns.count }} event{% if ns.count != 1 %}s{% endif %}
 {%- endfor %}
+{% endif %}
