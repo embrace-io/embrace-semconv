@@ -1,6 +1,6 @@
 # `schema_url` alone identifies this registry. Everything before the last `/` (minus the scheme)
-# is its name, e.g. `embrace.io/schemas/embrace`, and the last segment is its version.
-schema_url: https://embrace.io/schemas/embrace/0.2.0
+# is its name, e.g. `embrace.io/schemas/embrace-common`, and the last segment is its version.
+schema_url: https://embrace.io/schemas/embrace-common/0.3.0
 description: Federated semantic conventions for the Embrace SDK.
 stability: development
 dependencies:

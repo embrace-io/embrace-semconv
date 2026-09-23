@@ -79,7 +79,7 @@ your own groups:
 
 ```yaml
 dependencies:
-  - schema_url: https://embrace.io/schemas/embrace/<version>
+  - schema_url: https://embrace.io/schemas/embrace-common/<version>
     registry_path: https://github.com/embrace-io/embrace-semconv@v<version>[model]
 ```
 
@@ -121,7 +121,7 @@ Standard hygiene otherwise: commit only when asked, keep messages focused.
 Bump the version segment of `schema_url` in `model/manifest.yaml`, then tag — see `RELEASING.md`.
 Consumers pin exact tags and **tags are immutable**: fix a bad release with a new version, never a
 re-tag. Only the version segment ever moves: the rest of `schema_url`
-(`embrace.io/schemas/embrace`) is the registry's identity, and changing it makes a different
+(`embrace.io/schemas/embrace-common`) is the registry's identity, and changing it makes a different
 registry, not a new version.
 
 ## Pointers

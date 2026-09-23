@@ -88,7 +88,7 @@ There are two ways to consume this registry:
 
    ```yaml
    dependencies:
-     - schema_url: https://embrace.io/schemas/embrace/<version>
+     - schema_url: https://embrace.io/schemas/embrace-common/<version>
        registry_path: https://github.com/embrace-io/embrace-semconv@v<version>[model]
    ```
 

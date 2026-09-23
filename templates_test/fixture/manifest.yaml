@@ -1,6 +1,6 @@
 # Test fixture registry for the docs template regression test
 
-schema_url: https://embrace.io/schemas/embrace-fixture-dev/0.0.0-dev
+schema_url: https://embrace.io/schemas/embrace-common-fixture-dev/0.0.0-dev
 description: Fixture registry exercising the attribute and event docs templates.
 stability: development
 dependencies:
