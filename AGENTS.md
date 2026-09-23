@@ -24,10 +24,10 @@ model/
   manifest.yaml        # registry name (embrace), schema_url, dependencies (core OTel)
   emb/registry.yaml    # emb.* attribute definitions + the attribute_group that bundles them
 templates/registry/markdown/   # doc-generation templates (this repo emits docs, not code)
-scripts/               # check.sh, generate-docs.sh, package.sh, common.sh
 policies/              # local weaver policy (public attribute groups)
 docs/                  # GENERATED markdown — do not hand-edit; regenerate
-versions.env           # pinned weaver + core-semconv + policy versions
+Makefile               # validation, docs generation, packaging (`make help`); CI runs its targets
+versions.env           # pinned weaver + shared policy pack versions
 .github/               # workflows/ (check.yaml, release.yml) + actions/setup-weaver/ (weaver installer)
 ```
 
@@ -79,16 +79,15 @@ them as `events:` blocks that `ref` attributes, the same way groups do.
 
 ## Workflow — run before committing
 
-Weaver is pinned in `versions.env`; install it with `.github/actions/setup-weaver/install-weaver.sh`, or ensure the
-pinned version is on `PATH` (`common.sh` warns on a version mismatch).
+Weaver is pinned in `versions.env`; install it with `make install-weaver`, or ensure the pinned
+version is on `PATH` (the Makefile warns on a version mismatch).
 
-- **`scripts/check.sh`** — validates the schema, resolves the core-OTel dependency, and runs the
+- **`make check-policies`** — validates the schema, resolves the dependencies, and runs the
   shared + local policies. Must pass.
-- **`scripts/generate-docs.sh`** — regenerates `docs/`. Docs are committed and CI fails on drift, so
+- **`make generate-all`** — regenerates `docs/`. Docs are committed and CI fails on drift, so
   regenerate and commit them together. **Never hand-edit `docs/`.**
 
-These two commands are exactly the jobs in `.github/workflows/check.yaml`, so running both locally
-predicts CI. Standard hygiene otherwise: commit only when asked, keep messages focused.
+These are exactly the jobs in `.github/workflows/check.yaml`, so running them locally predicts CI. Standard hygiene otherwise: commit only when asked, keep messages focused.
 
 ## Releasing
 

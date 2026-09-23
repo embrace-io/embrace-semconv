@@ -31,7 +31,7 @@ jobs:
           version: ${{ steps.weaver.outputs.version }}
 
       - name: Validate registry (schema + shared policies)
-        run: scripts/check.sh
+        run: make check-policies
 
   docs-drift:
     runs-on: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
           version: ${{ steps.weaver.outputs.version }}
 
       - name: Regenerate docs
-        run: scripts/generate-docs.sh
+        run: make generate-all
 
       - name: Check committed docs are in sync
         uses: ./.github/actions/assert-no-drift
@@ -59,8 +59,8 @@ jobs:
           path: docs
           label: docs
           regenerate-hint: |
-            .github/actions/setup-weaver/install-weaver.sh   # once, if weaver is not on PATH
-            scripts/generate-docs.sh
+            make install-weaver   # once, if weaver is not on PATH
+            make generate-all
             git add docs/
 
   # Aggregate gate for branch protection: require only this job.

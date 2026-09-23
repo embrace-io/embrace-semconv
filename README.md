@@ -22,27 +22,29 @@ model/                    semantic convention definitions (the source of truth)
   emb/events.yaml         emb.* event definitions
 templates/                weaver Jinja2 templates for docs generation
 docs/                     generated markdown
-scripts/                  validation / resolution / docs generation
+Makefile                  validation / docs generation / packaging (`make help`)
+versions.env              pinned weaver and shared policy pack versions
 ```
 
 ## Getting started
 
 [Weaver](https://github.com/open-telemetry/weaver) is not available via package managers like
-Homebrew, but you can install it by running `.github/actions/setup-weaver/install-weaver.sh`, which downloads the release
-binary pinned in [`versions.env`](versions.env) and installs it to `~/.local/bin` (pass a different
-directory as the first argument if preferred). To update it, change `WEAVER_VERSION` in
-`versions.env` and rerun the script. The same file pins the upstream semantic-conventions tag and the
-shared policy pack used by `scripts/check.sh`.
+Homebrew, but `make install-weaver` downloads the release binary pinned in
+[`versions.env`](versions.env) and installs it to `~/.local/bin`. To update it, change
+`WEAVER_VERSION` in `versions.env` and rerun the target.
 
 ```bash
-scripts/check.sh          # validate the model: dependency resolution + shared OTel policies
-scripts/generate-docs.sh  # regenerate docs/ from the model
-scripts/package.sh        # produce publication manifest and resolved registry under build/package/
+make check-policies   # validate the model: dependency resolution + shared OTel and local policies
+make generate-all     # regenerate docs/ from the model
+make package          # produce publication manifest and resolved registry under .build/package/
+make help             # list every target
 ```
+
+CI runs the same targets.
 
 The markdown under `docs/` is generated output that is committed to the repo. If you change
 anything under `model/` or `templates/` (or bump the pinned weaver version), rerun
-`scripts/generate-docs.sh` and commit the regenerated files together with your change — CI
+`make generate-all` and commit the regenerated files together with your change — CI
 fails any PR whose committed docs don't match what the model and templates generate.
 
 See [RELEASING.md](RELEASING.md) for how versions are cut and published.

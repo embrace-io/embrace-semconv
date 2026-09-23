@@ -47,10 +47,10 @@ jobs:
           version: ${{ steps.weaver.outputs.version }}
 
       - name: Validate registry
-        run: scripts/check.sh
+        run: make check-policies
 
       - name: Package publication artifacts
-        run: scripts/package.sh
+        run: make package
 
       - name: Create release with artifacts
         env:
@@ -58,8 +58,8 @@ jobs:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           gh release create "$TAG" \
-            build/package/manifest.yaml \
-            build/package/resolved.yaml \
+            .build/package/manifest.yaml \
+            .build/package/resolved.yaml \
             --title "$TAG" \
             --generate-notes \
             --target "$GITHUB_SHA"
