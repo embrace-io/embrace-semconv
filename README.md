@@ -1,13 +1,17 @@
 # Embrace Semantic Conventions
 
 A federated OpenTelemetry semantic convention registry for the Embrace's `emb` namespace,
-to be shared between the various SDKs and backend to ensure a common set of key names. 
+to be shared between the various SDKs and backend to ensure a common set of key names.
 
 This registry follows the federated model established by [OTEP 4815](https://github.com/open-telemetry/opentelemetry-specification/blob/main/oteps/4815-semantic-conventions-schema-v2.md)
-and extends the general OpenTelemetry semantic conventions with the Embrace-specific `emb.*`
-conventions. Individual SDK platforms can create their own registry or consume this
-directly by generating language-specific files so the semantic conventions can be
-consumed programmatically.
+and extends the core [OpenTelemetry semantic conventions](https://github.com/open-telemetry/semantic-conventions)
+with the Embrace-specific `emb.*` conventions. It will also extend the
+[client-side semantic conventions](https://github.com/open-telemetry/semantic-conventions-client-side),
+which cover conventions common to mobile, browser, desktop and other end-user applications, once
+that registry publishes a release.
+
+Individual SDK platforms can create their own registry or consume this directly by generating
+language-specific files so the semantic conventions can be consumed programmatically.
 
 It contains YAMLs that define the semantic conventions, and scripts to generate associated
 markdown files, but does not generate language-specific binaries that are directly consumable in
@@ -17,14 +21,22 @@ instrumentation projects.
 
 ```
 model/                    semantic convention definitions (the source of truth)
-  manifest.yaml           registry name, schema_url, and pinned dependencies
-  emb/registry.yaml       emb.* attribute definitions
-  emb/events.yaml         emb.* event definitions
+  manifest.yaml           registry identity and version (schema_url) and pinned dependencies
+  emb/registry.yaml       emb.* attribute definitions and the attribute group that exports them
 templates/                weaver Jinja2 templates for docs generation
 docs/                     generated markdown
 Makefile                  validation / docs generation / packaging (`make help`)
 versions.env              pinned weaver and shared policy pack versions
 ```
+
+## Dependencies
+
+The core OpenTelemetry registry is pinned to a release tag in `model/manifest.yaml`, declared as
+`schema_url` + `registry_path`. `make check-policies` fails if the two name different releases.
+
+Weaver resolves a single version of each registry for the whole dependency graph. When a
+dependency that itself depends on core is added (such as the client-side registry), keep the core
+version in `model/manifest.yaml` in lockstep with it.
 
 ## Getting started
 
@@ -59,14 +71,22 @@ There are two ways to consume this registry:
    ```bash
    weaver registry generate \
      -r 'https://github.com/embrace-io/embrace-semconv@<tag>[model]' \
+     --v2 \
      --templates <templates-dir> <target> <output-dir>
    ```
 
 2. Extend it from your own registry — declare it as a dependency in your `manifest.yaml`, then
-   reference the attributes and events it (and its ancestors) define:
+   reference the attributes it defines:
 
    ```yaml
    dependencies:
-     - name: embrace
-       registry_path: https://github.com/embrace-io/embrace-semconv@<tag>[model]
+     - schema_url: https://embrace.io/schemas/embrace/<version>
+       registry_path: https://github.com/embrace-io/embrace-semconv@v<version>[model]
    ```
+
+   `schema_url` and `registry_path` name the same release and must move together. Weaver fetches
+   from `registry_path` but identifies the dependency by `schema_url`, and does not check that they
+   agree. This repo's `make check-policies` enforces that for its own dependencies.
+
+   A registry only sees what its direct dependencies define, so to also `ref` core attributes,
+   declare core as a dependency too, at the same version this registry uses.

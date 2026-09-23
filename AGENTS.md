@@ -4,7 +4,9 @@
 
 The canonical, cross-platform [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/concepts/semantic-conventions/)
 registry for Embrace's `emb.*` namespace. It is a **federated** registry (OTEP 4815, weaver
-`definition/2`) that depends on the core OTel semantic conventions.
+`definition/2`) that depends on the core OTel semantic conventions. It will also depend on the
+[client-side semantic conventions](https://github.com/open-telemetry/semantic-conventions-client-side)
+registry once that publishes a release.
 
 It is the single source of truth for Embrace attribute **definitions**. Embrace SDKs (Android first,
 others to follow) consume it as a dependency and generate their own language-specific constants from
@@ -21,7 +23,7 @@ starter set of attributes and will expand over time.
 
 ```
 model/
-  manifest.yaml        # registry name (embrace), schema_url, dependencies (core OTel)
+  manifest.yaml        # registry identity + version (schema_url), dependencies (core OTel)
   emb/registry.yaml    # emb.* attribute definitions + the attribute_group that bundles them
 templates/registry/markdown/   # doc-generation templates (this repo emits docs, not code)
 policies/              # local weaver policy (public attribute groups)
@@ -30,6 +32,20 @@ Makefile               # validation, docs generation, packaging (`make help`); C
 versions.env           # pinned weaver + shared policy pack versions
 .github/               # workflows/ (check.yaml, release.yml) + actions/setup-weaver/ (weaver installer)
 ```
+
+## Dependencies
+
+- **Identity is `schema_url`.** Weaver splits it at the last `/` into the registry's name and
+  version; there is no `name:` field. Every dependency is `schema_url` + `registry_path`, and the
+  two must change together — weaver does not check they agree, so `make check-policies` does for
+  any `registry_path` pinned to a release tag.
+- **Core OTel** is pinned to a release tag in `model/manifest.yaml`.
+- Weaver resolves **one** version per registry for the whole dependency graph, only warning when
+  requests differ. `make check-policies` turns that warning into a failure, so when a dependency
+  that itself depends on core is added (e.g. client-side), keep this repo's core pin in lockstep
+  with it.
+- A registry sees only what its **direct** dependencies define: core attributes would not be
+  reachable through client-side, so core stays a direct dependency even once client-side is added.
 
 ## Mental model: how federated weaver generation works
 
@@ -59,11 +75,14 @@ your own groups:
 
 ```yaml
 dependencies:
-  - name: embrace
-    registry_path: https://github.com/embrace-io/embrace-semconv@<tag>[model]
+  - schema_url: https://embrace.io/schemas/embrace/<version>
+    registry_path: https://github.com/embrace-io/embrace-semconv@v<version>[model]
 ```
 
-Pin an exact tag, never a branch. See `README.md` for the full consuming guide.
+Pin an exact tag, never a branch. `schema_url` and `registry_path` name the same release and must
+move together: weaver fetches from `registry_path` but identifies the dependency (for version
+conflicts and provenance) by `schema_url`, and does not check that they agree. See `README.md` for
+the full consuming guide.
 
 ## Extending it (add or change an attribute)
 
@@ -93,7 +112,9 @@ These are exactly the jobs in `.github/workflows/check.yaml`, so running them lo
 
 Bump the version segment of `schema_url` in `model/manifest.yaml`, then tag — see `RELEASING.md`.
 Consumers pin exact tags and **tags are immutable**: fix a bad release with a new version, never a
-re-tag.
+re-tag. Only the version segment ever moves: the rest of `schema_url`
+(`embrace.io/schemas/embrace`) is the registry's identity, and changing it makes a different
+registry, not a new version.
 
 ## Pointers
 
