@@ -1,16 +1,35 @@
 name: Release
 
+# Publishes a draft release that a maintainer has already prepared, attaching the
+# OTEP 4815 publication artifacts. See RELEASING.md.
+#
+# The draft represents a maintainer's intent to create a new release. The
+# workflow won't create one if it was accidentally invoked without the draft being
+# already present. The version is never passed in either: it is read from
+# the schema_url in model/manifest.yaml, which is the single source of truth for
+# this registry's identity and version.
+
 on:
   workflow_dispatch:
 
+# Only one release may be in flight at a time. Don't allow cancellation, which
+# could lead to broken/abandoned artifacts.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    # write permission is needed to attach the publication artifacts to the
+    # release, create the tag, and publish the release.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -21,22 +40,47 @@ jobs:
         run: |
           version=$(awk '/^schema_url:/ { n = split($2, parts, "/"); print parts[n]; exit }' model/manifest.yaml)
           if [ -z "$version" ]; then
-            echo "Could not parse version from model/manifest.yaml"
+            echo "::error::Could not parse a version from the schema_url in model/manifest.yaml."
             exit 1
           fi
           echo "tag=v${version}" >> "$GITHUB_OUTPUT"
           echo "Tag: v${version}"
 
-      - name: Refuse if the tag already exists
+      - name: Refuse if the git tag already exists
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" >/dev/null 2>&1; then
-            echo "::error::Tag '${TAG}' already exists. This workflow releases whatever version model/manifest.yaml declares. Change the version there and rerun."
+            echo "::error::Tag '${TAG}' already exists. Tags are immutable; bump the version segment of schema_url in model/manifest.yaml and merge that first."
             exit 1
           fi
           echo "Tag '${TAG}' is new."
+
+      - name: Find the draft release matching schema_url
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          info=$(gh release view "$TAG" --json isDraft 2>/dev/null || true)
+          if [ -z "$info" ]; then
+            existing_drafts=$(gh release list --limit 20 --json tagName,isDraft \
+              --jq '[.[] | select(.isDraft) | .tagName] | join(", ")')
+            echo "::error::Expected a draft release tagged '${TAG}', derived from the schema_url in model/manifest.yaml."
+            if [ -n "$existing_drafts" ]; then
+              echo "Existing draft tags: ${existing_drafts}"
+              echo "Either retag the draft to '${TAG}', or update schema_url in model/manifest.yaml to match the draft."
+            else
+              echo "No draft releases exist. See RELEASING.md."
+            fi
+            exit 1
+          fi
+          is_draft=$(echo "$info" | jq -r .isDraft)
+          if [ "$is_draft" != "true" ]; then
+            echo "::error::Release '${TAG}' is already published; refusing to re-release."
+            exit 1
+          fi
+          echo "Draft release '${TAG}' matches model/manifest.yaml."
 
       - name: Read pinned weaver version
         id: weaver
@@ -49,21 +93,31 @@ jobs:
         with:
           version: ${{ steps.weaver.outputs.version }}
 
+      # Nothing should be published that would not pass CI. The release runs from a
+      # dispatch, so it is not otherwise guaranteed to sit on a commit CI has seen.
       - name: Validate registry
         run: make check-policies
 
       - name: Package publication artifacts
         run: make package
 
-      - name: Create release with artifacts
+      - name: Upload artifacts to the draft
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          gh release create "$TAG" \
+          gh release upload "$TAG" \
             .build/package/manifest.yaml \
             .build/package/resolved.yaml \
-            --title "$TAG" \
-            --generate-notes \
-            --target "$GITHUB_SHA"
-          echo "Released ${TAG} at ${GITHUB_SHA}"
+            --clobber
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          gh release edit "$TAG" \
+            --draft=false \
+            --target "$TARGET_SHA"
+          echo "Released ${TAG} at ${TARGET_SHA}"

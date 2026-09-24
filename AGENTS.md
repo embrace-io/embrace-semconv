@@ -118,7 +118,8 @@ Standard hygiene otherwise: commit only when asked, keep messages focused.
 
 ## Releasing
 
-Bump the version segment of `schema_url` in `model/manifest.yaml`, then tag — see `RELEASING.md`.
+Bump the version segment of `schema_url` in `model/manifest.yaml`, prepare a draft release for that
+version, then run the `Release` workflow, which publishes the draft — see `RELEASING.md`.
 Consumers pin exact tags and **tags are immutable**: fix a bad release with a new version, never a
 re-tag. Only the version segment ever moves: the rest of `schema_url`
 (`embrace.io/schemas/embrace`) is the registry's identity, and changing it makes a different

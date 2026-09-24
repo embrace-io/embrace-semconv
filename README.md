@@ -13,11 +13,16 @@ that registry publishes a release.
 Individual SDK platforms can create their own registry or consume this directly by generating
 language-specific files so the semantic conventions can be consumed programmatically.
 
-It contains YAMLs that define the semantic conventions, and scripts to generate associated
-markdown files, but does not generate language-specific binaries that are directly consumable in
-instrumentation projects.
+It contains YAMLs that define the semantic conventions for the namespaces it owns and the
+associated Markdown files for those conventions. It publishes version-stamped releases
+representing the public-facing surface of the manifest, but it does not generate or publish
+language-specific binaries that make the hosted conventions consumable in instrumentation.
 
-## Repository layout
+## Structure
+
+Semantic conventions owned by this registry are defined in YAML files under `/model`. Using
+templates defined in `/templates`, Weaver-based tooling crawls through all the files in that
+directory and creates the appropriate documentation in `/docs`.
 
 ```
 model/                    semantic convention definitions (the source of truth)
@@ -31,6 +36,17 @@ docs/                     generated markdown
 Makefile                  validation / docs generation / tests / packaging (`make help`)
 versions.env              pinned weaver, OPA and shared policy pack versions
 ```
+
+## Versioning
+
+The registry's identity and its version both come from the `schema_url` in
+`/model/manifest.yaml`: everything before the last `/` names the registry and the last segment is
+its version. Only that last segment ever moves. Changing any part before it does not produce a new
+version of this registry, it produces a different registry, and consumers pinning the old one never
+see the change.
+
+A release is published by the `Release` workflow from a draft that a maintainer prepares by hand.
+See [RELEASING.md](RELEASING.md) for how a version is cut.
 
 ## Dependencies
 
@@ -67,8 +83,6 @@ fails any PR whose committed docs don't match what the model and templates gener
 If you change a template on purpose, `make update-golden` refreshes `templates_test/golden/`;
 review that diff before committing it.
 
-See [RELEASING.md](RELEASING.md) for how versions are cut and published.
-
 ## Consuming this registry
 
 There are two ways to consume this registry:
@@ -83,7 +97,7 @@ There are two ways to consume this registry:
      --templates <templates-dir> <target> <output-dir>
    ```
 
-2. Extend it from your own registry — declare it as a dependency in your `manifest.yaml`, then
+2. Extend it from your own registry. Pin both fields to the same release in your manifest, then
    reference the attributes it defines:
 
    ```yaml
@@ -92,9 +106,11 @@ There are two ways to consume this registry:
        registry_path: https://github.com/embrace-io/embrace-semconv@v<version>[model]
    ```
 
-   `schema_url` and `registry_path` name the same release and must move together. Weaver fetches
-   from `registry_path` but identifies the dependency by `schema_url`, and does not check that they
-   agree. This repo's `make check-policies` enforces that for its own dependencies.
+   `schema_url` identifies the registry and its version, while `registry_path` is where the files
+   are actually fetched from. Weaver does not check that the two agree while resolving a
+   dependency, so bumping one without the other could result in an unexpected version being pulled
+   in (i.e. the one in `registry_path` will be used). This repo's `make check-policies` enforces
+   that for its own dependencies.
 
    A registry only sees what its direct dependencies define, so to also `ref` core attributes,
    declare core as a dependency too, at the same version this registry uses.

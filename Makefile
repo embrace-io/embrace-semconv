@@ -3,7 +3,7 @@
 
 SHELL := /usr/bin/env bash
 
-# Weaver version is pinned in versions.env
+# Weaver and OPA versions, and the shared policy pack, are pinned in versions.env
 include versions.env
 
 # Manifests whose dependencies check-policies verifies for schema_url/registry_path agreement.
@@ -60,8 +60,8 @@ generate-docs: check-weaver
 generate-all: generate-docs
 
 # Produce the publication manifest and resolved registry under .build/package/. The version is the
-# last segment of the schema_url in model/manifest.yaml, and the resolved-schema URI baked into the
-# artifacts points at that version's GitHub release.
+# last segment of the schema_url in model/manifest.yaml, and the resolved-registry URI baked into
+# the artifacts points at that version's GitHub release, which is where consumers fetch it from.
 package: check-weaver
 	@set -eu; \
 	version="$$(awk '/^schema_url:/ { n = split($$2, parts, "/"); print parts[n]; exit }' model/manifest.yaml)"; \
@@ -74,11 +74,11 @@ package: check-weaver
 	weaver registry package \
 	  -r model \
 	  --v2 \
-	  --resolved-schema-uri "$$repo_url/releases/download/v$$version/resolved.yaml" \
+	  --resolved-registry-uri "$$repo_url/releases/download/v$$version/resolved.yaml" \
 	  -o .build/package; \
 	echo "packaged version $$version -> .build/package"
 
-# Every test suite this repo owns. Used locally only, as CI runs this differently.
+# Every test suite this repo owns. Used locally only, as CI runs these as separate jobs.
 test: test-templates test-policies
 
 # Regression test for the doc templates. Compare the docs generated from the fixture with the
