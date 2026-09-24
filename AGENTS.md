@@ -91,7 +91,8 @@ the full consuming guide.
 ## Extending it (add or change an attribute)
 
 1. Add a `key`-ed definition under `attributes:` in `model/emb/registry.yaml` (give it
-   `type`/`brief`/`examples`/`stability`).
+   `type`/`brief`/`examples`/`stability`). Use `stability: stable`: this registry only holds
+   conventions the Embrace backend already consumes, so they are stable from the start.
 2. `ref` it from an `attribute_group` (e.g. `registry.embrace.emb`) — otherwise it generates nothing.
 3. `key`s and group `id`s are the **on-the-wire contract** with the Embrace backend. Renaming them is
    a breaking change and requires backend agreement; renaming a `.yaml` *file* is free.

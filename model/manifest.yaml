@@ -1,8 +1,8 @@
 # `schema_url` alone identifies this registry. Everything before the last `/` (minus the scheme)
 # is its name, e.g. `embrace.io/schemas/embrace`, and the last segment is its version.
-schema_url: https://embrace.io/schemas/embrace/0.2.0
+schema_url: https://embrace.io/schemas/embrace/0.3.0
 description: Federated semantic conventions for the Embrace SDK.
-stability: development
+stability: stable
 dependencies:
   - schema_url: https://opentelemetry.io/schemas/1.44.0
     registry_path: https://github.com/open-telemetry/semantic-conventions@v1.44.0[model]

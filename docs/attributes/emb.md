@@ -4,5 +4,5 @@
 
 | Attribute | Type | Stability | Description | Examples |
 |---|---|---|---|---|
-| `emb.session_part_id` | `string` | development | UUID identifying the session part that the telemetry was recorded in. A user session is composed of one or more consecutive session parts. | `3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d` |
-| `emb.user_session_id` | `string` | development | UUID identifying the user session that the telemetry was recorded in. | `3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d` |
+| `emb.session_part_id` | `string` | stable | UUID identifying the session part that the telemetry was recorded in. A user session is composed of one or more consecutive session parts. | `3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d` |
+| `emb.user_session_id` | `string` | stable | UUID identifying the user session that the telemetry was recorded in. | `3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d` |
