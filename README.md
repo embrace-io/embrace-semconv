@@ -343,7 +343,7 @@ templates:
 ```
 
 ```jinja
-{# attributes.kt.j2 #}
+{# attributes.kt.j2: the trailing dash stops this comment leaving a blank first line -#}
 // Generated from {{ ctx.id }}. Do not edit.
 object {{ ctx.id | split('.') | last | pascal_case }}Attributes {
 {%- for attribute in ctx.attributes | sort(attribute="key") %}
