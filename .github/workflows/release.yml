@@ -38,9 +38,8 @@ jobs:
       - name: Compute tag from model/manifest.yaml
         id: tag
         run: |
-          version=$(awk '/^schema_url:/ { n = split($2, parts, "/"); print parts[n]; exit }' model/manifest.yaml)
-          if [ -z "$version" ]; then
-            echo "::error::Could not parse a version from the schema_url in model/manifest.yaml."
+          if ! version=$(make --no-print-directory -s print-version); then
+            echo "::error::Could not read a version from the schema_url in model/manifest.yaml."
             exit 1
           fi
           echo "tag=v${version}" >> "$GITHUB_OUTPUT"
@@ -64,12 +63,16 @@ jobs:
         run: |
           info=$(gh release view "$TAG" --json isDraft 2>/dev/null || true)
           if [ -z "$info" ]; then
-            existing_drafts=$(gh release list --limit 20 --json tagName,isDraft \
-              --jq '[.[] | select(.isDraft) | .tagName] | join(", ")')
+            # List drafts by title too: a draft saved without a tag has an empty tagName, and is
+            # otherwise indistinguishable from no draft at all.
+            existing_drafts=$(gh release list --limit 20 --json name,tagName,isDraft \
+              --jq '.[] | select(.isDraft) | "  \(.name): \(if .tagName == "" then "no tag" else "tag \(.tagName)" end)"')
             echo "::error::Expected a draft release tagged '${TAG}', derived from the schema_url in model/manifest.yaml."
             if [ -n "$existing_drafts" ]; then
-              echo "Existing draft tags: ${existing_drafts}"
-              echo "Either retag the draft to '${TAG}', or update schema_url in model/manifest.yaml to match the draft."
+              echo "Existing drafts:"
+              echo "${existing_drafts}"
+              echo "Edit the draft so its tag is '${TAG}' (in the web UI, type it in the tag selector and click 'Create a new tag'),"
+              echo "or update schema_url in model/manifest.yaml to match the draft's tag."
             else
               echo "No draft releases exist. See RELEASING.md."
             fi

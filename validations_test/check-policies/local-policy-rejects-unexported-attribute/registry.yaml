@@ -1,0 +1,21 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: registry.validations_test
+    visibility: public
+    stability: development
+    brief: Group that exports one of the two attributes.
+    attributes:
+      - ref: validations_test.exported
+
+attributes:
+  - key: validations_test.exported
+    type: string
+    stability: development
+    brief: Attribute the group exports.
+    examples: ["x"]
+  - key: validations_test.unexported
+    type: string
+    stability: development
+    brief: Attribute no group exports.
+    examples: ["x"]

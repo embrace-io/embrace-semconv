@@ -18,11 +18,23 @@ Only when `model/` has changed since the last tag. The model is everything consu
 1. Bump the version segment of `schema_url` in `model/manifest.yaml` and merge that to `main`
    - e.g. `0.2.0` → `0.3.0`.
 2. Prepare a [draft release](https://github.com/embrace-io/embrace-semconv/releases/new):
-   - Tag: `v<version>` matching the bumped `schema_url` (e.g. `v0.3.0`), choosing
-     `Create new tag on publish`.
-   - Description: what changed in `model/` since the last release. The `Generate release notes`
-     button fills in the merged PRs as a starting point.
+   - Tag: type `v<version>` matching the bumped `schema_url` (e.g. `v0.3.0`) into the tag
+     selector, click `Create a new tag`, and confirm in the pop-up that the tag should be created
+     on publish. This doesn't create the tag yet, which is what the workflow expects: it is
+     created when the workflow publishes the release in step #3. The tag selector now shows the
+     new tag and `Previous tag` shows `Auto`.
+   - Description: click `Generate release notes` (enabled only once the tag is set) to pre-fill
+     the input with a list of PRs merged since the last release. Remove PRs that don't actually
+     change the published artifacts, as the notes should cover only what changed in the published
+     registry, i.e. under `model/`. Use
+     `git log --oneline v<previous-version>..origin/main -- model` to list the commits that
+     touched the model if you need help curating this list.
    - Save the release as draft. Do not publish!
+   - Optional: check that a release draft exists with the right tag. This should print `v<version>`:
+
+     ```bash
+     gh api repos/embrace-io/embrace-semconv/releases --jq '.[] | select(.draft) | .tag_name'
+     ```
 3. Run the [`Release` workflow](https://github.com/embrace-io/embrace-semconv/actions/workflows/release.yml)
    from the Actions tab (`workflow_dispatch`). It will:
    - Derive the tag from the manifest. The release will fail if the git tag already exists, or if
