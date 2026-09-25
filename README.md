@@ -4,7 +4,7 @@ A federated OpenTelemetry semantic convention registry for the Embrace's `emb` n
 to be shared between the various SDKs and backend to ensure a common set of key names.
 
 This registry follows the federated model established by [OTEP 4815](https://github.com/open-telemetry/opentelemetry-specification/blob/main/oteps/4815-semantic-conventions-schema-v2.md)
-and extends the core [OpenTelemetry semantic conventions](https://github.com/open-telemetry/semantic-conventions)
+and extends the core registry, the [OpenTelemetry semantic conventions](https://github.com/open-telemetry/semantic-conventions),
 with the Embrace-specific `emb.*` conventions. It will also extend the
 [client-side semantic conventions](https://github.com/open-telemetry/semantic-conventions-client-side),
 which cover conventions common to mobile, browser, desktop and other end-user applications, once
@@ -56,14 +56,14 @@ See [RELEASING.md](RELEASING.md) for how a version is cut.
 
 ## Dependencies
 
-The core OpenTelemetry registry is pinned to a release tag in `model/manifest.yaml`, declared as
+The core registry is pinned to a release tag in `model/manifest.yaml`, declared as
 `schema_url` + `registry_path`. `make validate-registry` fails if the `schema_url` doesn't name the
 registry and version that `registry_path` fetches.
 
 Weaver resolves a single version of each registry for the whole dependency graph, and
 `make validate-registry` fails if the graph requests any registry at more than one version. When a
-dependency that itself depends on core is added (such as the client-side registry), keep the core
-version in `model/manifest.yaml` in lockstep with it.
+dependency that itself depends on the core registry is added (such as the client-side registry),
+keep the core registry's version in `model/manifest.yaml` in lockstep with it.
 
 ## Getting started
 
@@ -76,7 +76,7 @@ version in `versions.env` and rerun the target. The tests also need
 
 ```bash
 make validate-registry   # validate the registry: dependencies + schema + shared and local policies
-make generate-all        # regenerate docs/ from the model
+make generate-all        # regenerate docs/ from the registry
 make test                # template and validation regression tests + rego policy unit tests
 make package             # produce publication manifest and resolved registry under .build/package/
 make help                # list every target
@@ -87,7 +87,7 @@ CI runs the same targets in the `CI validation` workflow, one job per target and
 The markdown under `docs/` is generated output that is committed to the repo. If you change
 anything under `model/` or `templates/` (or bump the pinned weaver version), rerun
 `make generate-all` and commit the regenerated files together with your change — CI's
-`validate-docs` job fails any PR whose committed docs don't match what the model and templates
+`validate-docs` job fails any PR whose committed docs don't match what the registry and templates
 generate.
 
 If you change a template on purpose, `make update-golden` refreshes `templates_test/golden/`;
@@ -153,10 +153,10 @@ federated registry and declare this one as a dependency.
 1. Declare the dependency in your registry's `manifest.yaml`, pinning both fields to the same
    release.
 
-   Your registry is a directory of YAML files that you point weaver at with `-r`. By convention, it
-   is a directory called `model/` at the root of your repo: the core OpenTelemetry semantic
-   conventions registry, the other OpenTelemetry registries and this one all do that, and weaver's
-   own default registry is core's `[model]` subdirectory. Weaver doesn't require the name, but
+   Your registry is defined by a directory of YAML files that you point weaver at with `-r`. By
+   convention, it is a directory called `model/` at the root of your repo: the core registry, the
+   other OpenTelemetry registries and this one all do that, and weaver's own default registry is
+   the core registry's `[model]` subdirectory. Weaver doesn't require the name, but
    following it means anyone depending on your registry writes the same `…@<tag>[model]`
    `registry_path` as for every other one. This README uses `model/` throughout.
 
@@ -180,15 +180,15 @@ federated registry and declare this one as a dependency.
      `embrace.io/schemas/embrace-web`) as the name, so changing any part of it, `schemas`
      included, creates a different registry, not a new version. The `/schemas/` segment is a
      convention, not a requirement: weaver only needs the last segment to be the version, and
-     `https://<your-domain>/<your-registry>/<your-version>` works too. Core, the other
-     OpenTelemetry registries and this one all use
+     `https://<your-domain>/<your-registry>/<your-version>` works too. The core registry,
+     the other OpenTelemetry registries and this one all use
      `https://<domain>/schemas/<registry>/<version>`, the pattern
      [OTEP 4815](https://github.com/open-telemetry/opentelemetry-specification/blob/main/oteps/4815-semantic-conventions-schema-v2.md)
      describes, so following it keeps your URL recognizable next to theirs.
    - `<your-version>`: your registry's own version, e.g. `1.1.0`.
    - `<your-description>`: a one-line description of your registry.
    - `<your-stability>`: `development` or `stable`.
-   - `<core-version>`: the core OpenTelemetry release, without the `v` prefix, e.g. `1.44.0`. Use
+   - `<core-version>`: the core registry release, without the `v` prefix, e.g. `1.44.0`. Use
      the same version this registry depends on (see [`model/manifest.yaml`](model/manifest.yaml)).
    - `<embrace-version>`: this registry's release, without the `v` prefix, e.g. `0.3.0`.
      `registry_path` adds the `v` because that's how the release tags are named.
@@ -212,8 +212,9 @@ federated registry and declare this one as a dependency.
    one in `registry_path` will be used). This repo's `make validate-registry` enforces that they
    agree for its own dependencies.
 
-   A registry only sees what its direct dependencies define, so to also `ref` core attributes,
-   declare core as a dependency too, at the same version this registry uses.
+   A registry only sees what its direct dependencies define, so to also `ref` the core registry's
+   attributes, declare the core registry as a dependency too, at the same version this registry
+   uses.
 
 2. Reference what you need by referencing an attribute by name or importing a whole group. This
    ensures the source code generation step later on picks up the right conventions.
@@ -239,19 +240,21 @@ federated registry and declare this one as a dependency.
        brief: <your-brief>
        attributes:
          - ref: <attribute-key>   # e.g. from this registry
-         - ref: <attribute-key>   # e.g. from core OpenTelemetry
+         - ref: <attribute-key>   # e.g. from the core registry
    ```
 
-   - `<your-group-id>`: your attribute group's ID. Weaver only needs it to be unique. Core and the
-     mainframe registry name the groups that hold their attributes `registry.<namespace>` (e.g.
-     `registry.session`), and this registry follows that for the group it exports
-     (`registry.embrace.emb`); there's no settled convention yet for `definition/2` groups beyond
-     that, so any unique ID works. Group IDs are part of your registry's public surface.
+   - `<your-group-id>`: your attribute group's ID. Weaver only needs it to be unique. The core
+     registry and the mainframe registry name the groups that hold their attributes
+     `registry.<namespace>` (e.g. `registry.session`), and this registry follows that for the group
+     it exports (`registry.embrace.emb`); there's no settled convention yet for `definition/2`
+     groups beyond that, so any unique ID works. Group IDs are part of your registry's public
+     surface.
    - `visibility: public`: required for the group to reach your templates. Weaver drops `internal`
      groups (building blocks other groups can include) when it resolves the registry.
    - `<your-stability>` and `<your-brief>`: the group's stability and a one-line description.
    - `<attribute-key>`: the key of an attribute to include, from this registry (see
-     [`docs/`](docs/README.md)), from core, or from your own registry. List as many as you need.
+     [`docs/`](docs/README.md)), from the core registry, or from your own registry. List as many
+     as you need.
 
    For example, for the Embrace Web SDK's session attributes:
 
@@ -266,7 +269,7 @@ federated registry and declare this one as a dependency.
        brief: Session attributes the Embrace Web SDK records.
        attributes:
          - ref: emb.user_session_id   # from this registry
-         - ref: session.id            # from core OpenTelemetry
+         - ref: session.id            # from the core registry
    ```
 
    Or import this registry's whole group. `registry.embrace.emb` is the group this registry
@@ -282,7 +285,7 @@ federated registry and declare this one as a dependency.
    ```
 
    A `ref` that doesn't resolve to anything is a hard error, which catches typos and attributes
-   removed upstream.
+   removed from a dependency.
 
 3. Generate source code based on your registry:
 
@@ -364,7 +367,7 @@ document only its own attributes.
 
 The Embrace Android SDK consumes this registry this way in its
 [`embrace-android-semconv`](https://github.com/embrace-io/embrace-android-sdk/tree/main/embrace-android-semconv)
-module: its manifest depends on core and on this registry, its own groups `ref` the attributes it
-records, its Kotlin templates generate the constants, a Gradle task runs `weaver registry generate`,
-and CI fails if the committed output drifts. You can use whatever tooling is appropriate for your
-project to accomplish what the Android SDK does.
+module: its manifest depends on the core registry and on this registry, its own groups `ref` the
+attributes it records, its Kotlin templates generate the constants, a Gradle task runs
+`weaver registry generate`, and CI fails if the committed output drifts. You can use whatever
+tooling is appropriate for your project to accomplish what the Android SDK does.

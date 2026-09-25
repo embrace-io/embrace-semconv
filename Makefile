@@ -75,9 +75,9 @@ validate-registry: require-weaver validate-dependencies
 # manifests declare. The resolved registry that `weaver registry package` writes lists every
 # registry in the tree, each under the schema_url in its own manifest. Two things must hold there:
 # - No registry is in the tree at more than one version. When two registries request different
-#   versions of one (e.g. this registry and one of its dependencies both depend on core), weaver
-#   uses the highest, so some registry runs against a version it was not validated with. Weaver
-#   warns only when the dropped version is the one the root requested.
+#   versions of one (e.g. this registry and one of its dependencies both depend on the core
+#   registry), weaver uses the highest, so some registry runs against a version it was not
+#   validated with. Weaver warns only when the dropped version is the one the root requested.
 # - Every schema_url a manifest declares is in the tree. A dependency's registry_path is what
 #   weaver fetches, and weaver keys the registry by the declared schema_url without checking it
 #   against the fetched registry's own. A schema_url naming another version or registry (a typo in
@@ -110,9 +110,9 @@ validate-dependencies: require-weaver
 	  exit 1; \
 	fi
 
-# Regenerate the committed markdown under docs/ from the model. Needs network access. CI fails
-# when the committed docs don't match what this generates, so run this before submitting model or
-# template changes and commit the result.
+# Regenerate the committed markdown under docs/ from the registry. Needs network access. CI fails
+# when the committed docs don't match what this generates, so run this before submitting registry
+# or template changes and commit the result.
 generate-docs: require-weaver
 	rm -rf docs
 	weaver registry generate -r $(MODEL) --v2 --templates templates markdown docs
@@ -157,8 +157,8 @@ test: test-templates test-policies test-validations
 # change is made.
 #
 # A fixture import that matches nothing leaves the provenance filters untested, and weaver only
-# warns about it. Weaver wraps its text warnings to the terminal width, so the unmatched-import
-# check reads the typed JSON diagnostics instead, and prints their text for humans.
+# warns about it. Weaver wraps its text warnings to the terminal width, so this test reads the
+# typed JSON diagnostics instead, and prints their text for humans.
 test-templates: require-weaver require-jq
 	@mkdir -p .build
 	@rm -rf .build/test-docs

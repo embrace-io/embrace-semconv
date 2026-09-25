@@ -28,9 +28,10 @@ Only when `model/` has changed since the last tag. The model is everything consu
      change the published artifacts, as the notes should cover only what changed in the published
      registry, i.e. under `model/`. Use
      `git log --oneline v<previous-version>..origin/main -- model` to list the commits that
-     touched the model if you need help curating this list.
+     touched `model/` if you need help curating this list.
    - Save the release as draft. Do not publish!
-   - Optional: check that a release draft exists with the right tag. This should print `v<version>`:
+   - Optional: confirm that a release draft exists with the right tag. This should print
+     `v<version>`:
 
      ```bash
      gh api repos/embrace-io/embrace-semconv/releases --jq '.[] | select(.draft) | .tag_name'

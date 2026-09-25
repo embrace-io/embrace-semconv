@@ -1,5 +1,6 @@
-# Depends on core 1.44.0 directly and, through older-core, on core 1.43.0. Weaver uses 1.44.0
-# without a warning, so older-core runs against a core it was never validated with.
+# Depends on the core registry 1.44.0 directly and, through older-core, on the core registry
+# 1.43.0. Weaver uses 1.44.0 without a warning, so older-core runs against a core registry version
+# it was never validated with.
 
 schema_url: https://embrace.io/schemas/validations-test-case/0.0.0-dev
 description: Case where a dependency requests an older version of a registry than this one.

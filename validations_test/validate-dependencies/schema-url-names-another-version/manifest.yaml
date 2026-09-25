@@ -1,4 +1,4 @@
-# Declares core 1.44.0 but fetches the v1.43.0 tag.
+# Declares the core registry 1.44.0 but fetches the v1.43.0 tag.
 
 schema_url: https://embrace.io/schemas/validations-test-case/0.0.0-dev
 description: Case where a dependency's schema_url names a different version than it fetches.
