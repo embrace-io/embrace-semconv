@@ -17,7 +17,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Check for drift
+    - name: Compare committed files with the generator's output
       shell: bash
       env:
         DRIFT_PATH: ${{ inputs.path }}

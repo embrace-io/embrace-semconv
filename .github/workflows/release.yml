@@ -98,8 +98,8 @@ jobs:
 
       # Nothing should be published that would not pass CI. The release runs from a
       # dispatch, so it is not otherwise guaranteed to sit on a commit CI has seen.
-      - name: Validate registry
-        run: make check-policies
+      - name: Validate the registry (dependencies + schema + policies)
+        run: make validate-registry
 
       - name: Package publication artifacts
         run: make package

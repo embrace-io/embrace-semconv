@@ -1,6 +1,6 @@
 # Imports a group that no dependency exports. Weaver only warns, and wraps the warning to the
-# terminal width, so the check reads weaver's JSON diagnostics instead of its text. The group ID is
-# long enough that the text version wraps.
+# terminal width, so the unmatched-import check reads weaver's JSON diagnostics instead of its
+# text. The group ID is long enough that the text version wraps.
 
 schema_url: https://embrace.io/schemas/validations-test-case/0.0.0-dev
 description: Case whose import matches nothing in any dependency.

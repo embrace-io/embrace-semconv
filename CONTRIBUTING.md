@@ -20,9 +20,10 @@ dependency registries. The policy unit tests additionally need
 Before pushing, run:
 
 ```bash
-make check-policies   # validate the model
-make generate-all     # regenerate docs/ and commit the result
-make test             # template regression test + rego policy unit tests
+make validate-registry   # validate the registry
+make generate-all        # regenerate docs/ and commit the result
+make test                # template and validation regression tests + rego policy unit tests
 ```
 
-These match the CI jobs in `.github/workflows/check.yaml`.
+These match the CI jobs in `.github/workflows/ci-validation.yaml`. The tests also need
+[jq](https://jqlang.org/download/) on `PATH`.

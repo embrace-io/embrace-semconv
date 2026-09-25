@@ -39,7 +39,8 @@ Only when `model/` has changed since the last tag. The model is everything consu
    from the Actions tab (`workflow_dispatch`). It will:
    - Derive the tag from the manifest. The release will fail if the git tag already exists, or if
      no matching draft is waiting. The latter should be created in step #2.
-   - Validate the registry (i.e. running `make check-policies`), including the shared policy pack.
+   - Validate the registry (i.e. running `make validate-registry`): its dependencies, schema, and
+     the shared and local policies.
    - Package the publication artifacts (i.e. running `make package`).
    - Attach `manifest.yaml` and `resolved.yaml` to the draft and publish it, creating the
      `v<version>` tag at the workflow's commit.
