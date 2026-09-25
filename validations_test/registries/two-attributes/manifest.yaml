@@ -1,0 +1,6 @@
+# Baseline for the validations_test cases: an earlier release that defined two attributes. Not a
+# case itself.
+
+schema_url: https://embrace.io/schemas/validations-test-case/0.0.0
+description: Baseline registry with two attributes.
+stability: development

@@ -47,6 +47,10 @@ its version. Only that last segment ever moves. Changing any part before it does
 version of this registry, it produces a different registry, and consumers pinning the old one never
 see the change.
 
+`make validate-registry` compares the registry with its latest release and fails on breaking
+changes: removing an attribute or signal, or changing a stable one incompatibly. Deprecate
+instead of removing.
+
 A release is published by the `Release` workflow from a draft that a maintainer prepares by hand.
 See [RELEASING.md](RELEASING.md) for how a version is cut.
 

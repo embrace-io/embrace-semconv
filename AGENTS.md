@@ -112,7 +112,9 @@ Weaver and OPA are pinned in `versions.env`; install them with `make install-wea
 The tests also need `jq`.
 
 - **`make validate-registry`** — validates the registry: the resolved dependency trees
-  (`make validate-dependencies`), then the schema, then the shared + local policies. Must pass.
+  (`make validate-dependencies`), then the schema, then the shared + local policies, including
+  the shared pack's backwards-compatibility policies against the latest release tag (`BASELINE`
+  overrides it; empty skips it). Must pass.
 - **`make generate-all`** — regenerates `docs/`. Docs are committed, and CI fails when the
   committed docs don't match what this generates, so regenerate and commit them together.
   **Never hand-edit `docs/`.**
@@ -125,7 +127,8 @@ The tests also need `jq`.
 - **Adding a validation?** Add a case under `validations_test/<make target>/<case>/`: a registry
   that is invalid in the way the validation catches, plus an `expected-error.txt` holding text its
   error must contain. `test-validations` runs the target with the case as `MODEL`, `FIXTURE` and
-  `REGISTRIES`.
+  `REGISTRIES`. A case that needs a baseline names a registry under `validations_test/registries/`
+  in its `baseline.txt`.
 
 CI runs the same targets in the `CI validation` workflow (`.github/workflows/ci-validation.yaml`),
 one job per target and named after it. Its `validate-docs` job runs `make generate-all` and fails
