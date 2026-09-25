@@ -1,4 +1,4 @@
-name: Check
+name: CI validation
 
 on:
   push:
@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: Check Registry
+  validate-registry:
+    name: Validate registry
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -33,11 +33,11 @@ jobs:
         with:
           version: ${{ steps.weaver.outputs.version }}
 
-      - name: Validate registry (schema + shared policies)
-        run: make check-policies
+      - name: Validate the registry (dependencies + schema + policies)
+        run: make validate-registry
 
-  docs-drift:
-    name: Check Docs Drift
+  validate-docs:
+    name: Validate docs
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -59,7 +59,7 @@ jobs:
       - name: Regenerate docs
         run: make generate-all
 
-      - name: Check committed docs are in sync
+      - name: Compare committed docs with the regenerated ones
         uses: ./.github/actions/assert-no-drift
         with:
           path: docs
@@ -69,8 +69,8 @@ jobs:
             make generate-all
             git add docs/
 
-  templates:
-    name: Check Templates
+  test-templates:
+    name: Test templates
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -89,11 +89,11 @@ jobs:
         with:
           version: ${{ steps.weaver.outputs.version }}
 
-      - name: Check doc templates against golden fixture output
+      - name: Compare the docs rendered from the fixture with the golden files
         run: make test-templates
 
-  policies:
-    name: Check Policies
+  test-policies:
+    name: Test policies
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -115,8 +115,8 @@ jobs:
       - name: Unit-test rego policies
         run: make test-policies
 
-  validations:
-    name: Check Validations
+  test-validations:
+    name: Test validations
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -135,20 +135,20 @@ jobs:
         with:
           version: ${{ steps.weaver.outputs.version }}
 
-      - name: Check that validation fails on each invalid registry in validations_test/
+      - name: Confirm validation fails on each invalid registry in validations_test/
         run: make test-validations
 
   # Aggregate gate for branch protection: require only this job. Branch protection on main requires
-  # a check named `required-status-check`, so keep this job's name identical to its id.
+  # a status check named `required-status-check`, so keep this job's name identical to its id.
   required-status-check:
     name: required-status-check
     if: always()
     needs:
-      - check
-      - docs-drift
-      - templates
-      - policies
-      - validations
+      - validate-registry
+      - validate-docs
+      - test-templates
+      - test-policies
+      - test-validations
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -6,7 +6,7 @@ import rego.v1
 #
 # The cases that matter are the dependency ones. A registry with no `imports`
 # block never puts a dependency-sourced entry into these collections, so a policy
-# that mixes up local and inherited definitions passes every real check today and
+# that mixes up local and inherited definitions passes `make validate-registry` today and
 # only breaks the day someone adds `imports`. These tests inject that state
 # directly instead of waiting for it.
 

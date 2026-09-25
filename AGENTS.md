@@ -35,8 +35,8 @@ docs/                  # GENERATED markdown — do not hand-edit; regenerate
 Makefile               # validation, docs, tests, packaging (`make help`); CI runs its targets
 versions.env           # pinned weaver + OPA + shared policy pack versions
 .weaver.toml           # deliberately empty: stops weaver picking up one from a parent directory
-.github/               # workflows/ (check.yaml, release.yml), actions/ (setup-weaver, setup-opa,
-                       # assert-no-drift)
+.github/               # workflows/ (ci-validation.yaml, release.yml),
+                       # actions/ (setup-weaver, setup-opa, assert-no-drift)
 ```
 
 ## Dependencies
@@ -44,13 +44,13 @@ versions.env           # pinned weaver + OPA + shared policy pack versions
 - **Identity is `schema_url`.** Weaver splits it at the last `/` into the registry's name and
   version; there is no `name:` field. Every dependency is `schema_url` + `registry_path`, and the
   two must change together — weaver never fails when they disagree (at most it warns), so
-  `make check-dependencies` (run by `make check-policies`) fails unless each `schema_url` matches
-  the manifest of the registry its `registry_path` fetches.
+  `make validate-dependencies` (run by `make validate-registry`) fails unless each `schema_url`
+  matches the manifest of the registry its `registry_path` fetches.
 - **Core OTel** is pinned to a release tag in `model/manifest.yaml`.
 - Weaver resolves **one** version per registry for the whole dependency graph (the highest), and
-  warns only when it drops a version the root requested. `make check-dependencies` fails whenever
-  the graph requests a registry at more than one version, so when a dependency that itself depends
-  on core is added (e.g. client-side), keep this repo's core pin in lockstep with it.
+  warns only when it drops a version the root requested. `make validate-dependencies` fails
+  whenever the graph requests a registry at more than one version, so when a dependency that itself
+  depends on core is added (e.g. client-side), keep this repo's core pin in lockstep with it.
 - A registry sees only what its **direct** dependencies define: core attributes would not be
   reachable through client-side, so core stays a direct dependency even once client-side is added.
 
@@ -99,21 +99,23 @@ the full consuming guide.
 2. `ref` it from an `attribute_group` (e.g. `registry.embrace.emb`) — otherwise it generates nothing.
 3. `key`s and group `id`s are the **on-the-wire contract** with the Embrace backend. Renaming them is
    a breaking change and requires backend agreement; renaming a `.yaml` *file* is free.
-4. Run the validation workflow below and commit the regenerated `docs/` in the same change.
+4. Run the make targets under [Before committing](#before-committing) and commit the regenerated
+   `docs/` in the same change.
 
 Events are not currently modeled (Embrace doesn't use OTel events internally yet). If needed, add
 them as `events:` blocks that `ref` attributes, the same way groups do.
 
-## Workflow — run before committing
+## Before committing
 
 Weaver and OPA are pinned in `versions.env`; install them with `make install-weaver` /
 `make install-opa`, or ensure the pinned versions are on `PATH` (the Makefile warns on a mismatch).
 The tests also need `jq`.
 
-- **`make check-policies`** — validates the schema, resolves the dependencies, and runs the
-  shared + local policies. Must pass.
-- **`make generate-all`** — regenerates `docs/`. Docs are committed and CI fails on drift, so
-  regenerate and commit them together. **Never hand-edit `docs/`.**
+- **`make validate-registry`** — validates the registry: the resolved dependency trees
+  (`make validate-dependencies`), then the schema, then the shared + local policies. Must pass.
+- **`make generate-all`** — regenerates `docs/`. Docs are committed, and CI fails when the
+  committed docs don't match what this generates, so regenerate and commit them together.
+  **Never hand-edit `docs/`.**
 - **`make test`** — `make test-templates` (renders the fixture under `templates_test/` and diffs it
   against `templates_test/golden/`), `make test-policies` (OPA unit tests, which must cover every
   line of rego) and `make test-validations` (runs each validating make target against the invalid
@@ -125,7 +127,9 @@ The tests also need `jq`.
   error must contain. `test-validations` runs the target with the case as `MODEL`, `FIXTURE` and
   `REGISTRIES`.
 
-These are exactly the jobs in `.github/workflows/check.yaml`, so running them locally predicts CI.
+CI runs the same targets in the `CI validation` workflow (`.github/workflows/ci-validation.yaml`),
+one job per target and named after it. Its `validate-docs` job runs `make generate-all` and fails
+if `docs/` then differs from what's committed. Running the targets locally predicts CI.
 Standard hygiene otherwise: commit only when asked, keep messages focused.
 
 ## Releasing
@@ -140,5 +144,5 @@ registry, not a new version.
 ## Pointers
 
 - `README.md` — what the registry is + the full consuming/extending guide.
-- `CONTRIBUTING.md` — contributor setup (weaver install, running checks).
+- `CONTRIBUTING.md` — contributor setup (weaver install, running the make targets).
 - `RELEASING.md` — the release and tagging process.

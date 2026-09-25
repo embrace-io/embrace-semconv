@@ -30,7 +30,7 @@ model/                    semantic convention definitions (the source of truth)
   emb/registry.yaml       emb.* attribute definitions and the attribute group that exports them
 templates/                weaver Jinja2 templates for docs generation
 templates_test/           fixture registry + golden output for the template regression test
-policies/                 local rego policies run by `make check-policies`
+policies/                 local rego policies run by `make validate-registry`
 policies_test/            OPA unit tests for those policies
 validations_test/         invalid registries that validation must fail on (`make test-validations`)
 docs/                     generated markdown
@@ -53,11 +53,11 @@ See [RELEASING.md](RELEASING.md) for how a version is cut.
 ## Dependencies
 
 The core OpenTelemetry registry is pinned to a release tag in `model/manifest.yaml`, declared as
-`schema_url` + `registry_path`. `make check-policies` fails if the `schema_url` doesn't name the
+`schema_url` + `registry_path`. `make validate-registry` fails if the `schema_url` doesn't name the
 registry and version that `registry_path` fetches.
 
 Weaver resolves a single version of each registry for the whole dependency graph, and
-`make check-policies` fails if the graph requests any registry at more than one version. When a
+`make validate-registry` fails if the graph requests any registry at more than one version. When a
 dependency that itself depends on core is added (such as the client-side registry), keep the core
 version in `model/manifest.yaml` in lockstep with it.
 
@@ -71,19 +71,20 @@ version in `versions.env` and rerun the target. The tests also need
 [jq](https://jqlang.org/download/) on `PATH`.
 
 ```bash
-make check-policies   # validate the model: dependency resolution + shared OTel and local policies
-make generate-all     # regenerate docs/ from the model
-make test             # template and validation regression tests + rego policy unit tests
-make package          # produce publication manifest and resolved registry under .build/package/
-make help             # list every target
+make validate-registry   # validate the registry: dependencies + schema + shared and local policies
+make generate-all        # regenerate docs/ from the model
+make test                # template and validation regression tests + rego policy unit tests
+make package             # produce publication manifest and resolved registry under .build/package/
+make help                # list every target
 ```
 
-CI runs the same targets.
+CI runs the same targets in the `CI validation` workflow, one job per target and named after it.
 
 The markdown under `docs/` is generated output that is committed to the repo. If you change
 anything under `model/` or `templates/` (or bump the pinned weaver version), rerun
-`make generate-all` and commit the regenerated files together with your change — CI
-fails any PR whose committed docs don't match what the model and templates generate.
+`make generate-all` and commit the regenerated files together with your change — CI's
+`validate-docs` job fails any PR whose committed docs don't match what the model and templates
+generate.
 
 If you change a template on purpose, `make update-golden` refreshes `templates_test/golden/`;
 review that diff before committing it.
@@ -204,8 +205,8 @@ federated registry and declare this one as a dependency.
    `schema_url` identifies the registry and its version, while `registry_path` is where the files
    are actually fetched from. Weaver doesn't fail when the two disagree (at most it warns), so
    bumping one without the other could result in an unexpected version being pulled in (i.e. the
-   one in `registry_path` will be used). This repo's `make check-policies` enforces that they agree
-   for its own dependencies.
+   one in `registry_path` will be used). This repo's `make validate-registry` enforces that they
+   agree for its own dependencies.
 
    A registry only sees what its direct dependencies define, so to also `ref` core attributes,
    declare core as a dependency too, at the same version this registry uses.

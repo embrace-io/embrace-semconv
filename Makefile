@@ -12,7 +12,7 @@ include versions.env
 MODEL := model
 FIXTURE := templates_test/fixture
 
-# Registries whose dependency trees check-dependencies verifies.
+# Registries whose dependency trees validate-dependencies verifies.
 REGISTRIES := $(MODEL) $(FIXTURE)
 
 # Invalid registries that test-validations expects a make target to fail on:
@@ -20,22 +20,22 @@ REGISTRIES := $(MODEL) $(FIXTURE)
 VALIDATION_CASES := $(patsubst %/expected-error.txt,%,\
 	$(wildcard validations_test/*/*/expected-error.txt))
 
-.PHONY: all check-policies check-dependencies generate-docs generate-all print-version package \
-	test test-templates test-policies test-validations update-golden install-weaver install-opa \
-	check-weaver check-opa check-jq clean help
+.PHONY: all validate-registry validate-dependencies generate-docs generate-all print-version \
+	package test test-templates test-policies test-validations update-golden install-weaver \
+	install-opa require-weaver require-opa require-jq clean help
 
 # Default: validate, then regenerate everything this repo owns.
-all: check-policies generate-all
+all: validate-registry generate-all
 
-# Validate the model: schema validation, resolution of upstream dependencies, and the shared
-# OpenTelemetry policy pack (naming conventions, attribute type rules, stability requirements)
-# plus this repo's local policies. Needs network access to fetch the dependencies pinned in
-# model/manifest.yaml and the policy pack pinned in versions.env. Runs check-dependencies first.
+# Validate the registry: its resolved dependency trees (validate-dependencies, run first), then the
+# schema, then the shared OpenTelemetry policy pack (naming conventions, attribute type rules,
+# stability requirements) plus this repo's local policies. Needs network access to fetch the
+# dependencies pinned in model/manifest.yaml and the policy pack pinned in versions.env.
 #
 # A policy that loads but never runs (e.g. its `package` names no stage weaver runs) or no longer
-# matches weaver's input passes silently, so validations_test/check-policies/ holds an invalid
+# matches weaver's input passes silently, so validations_test/validate-registry/ holds an invalid
 # registry for each policy set, which this target must fail on.
-check-policies: check-weaver check-dependencies
+validate-registry: require-weaver validate-dependencies
 	@weaver registry check \
 	  -r $(MODEL) \
 	  --v2 \
@@ -54,9 +54,9 @@ check-policies: check-weaver check-dependencies
 #   against the fetched registry's own. A schema_url naming another version or registry (a typo in
 #   its path included: `opentelemetry.io/cool-schemas` is not `opentelemetry.io/schemas`) would
 #   otherwise go unnoticed, along with any version conflict it hides.
-# The invalid registries under validations_test/check-dependencies/ break each rule, and
+# The invalid registries under validations_test/validate-dependencies/ break each rule, and
 # `make test-validations` confirms this target fails on them.
-check-dependencies: check-weaver
+validate-dependencies: require-weaver
 	@set -e; \
 	rm -rf .build/dependencies; \
 	mkdir -p .build/dependencies; \
@@ -82,12 +82,13 @@ check-dependencies: check-weaver
 	fi
 
 # Regenerate the committed markdown under docs/ from the model. Needs network access. CI fails
-# on docs drift, so run this before submitting model or template changes and commit the result.
-generate-docs: check-weaver
+# when the committed docs don't match what this generates, so run this before submitting model or
+# template changes and commit the result.
+generate-docs: require-weaver
 	rm -rf docs
 	weaver registry generate -r $(MODEL) --v2 --templates templates markdown docs
 
-# Every regeneration this repo owns. CI checks that committed output matches this.
+# Every regeneration this repo owns. CI fails when the committed output doesn't match this.
 generate-all: generate-docs
 
 # Print this registry's version: the last segment of the schema_url in model/manifest.yaml. Fails
@@ -107,7 +108,7 @@ print-version:
 # Produce the publication manifest and resolved registry under .build/package/. The resolved-
 # registry URI baked into the artifacts points at the version's GitHub release (see print-version),
 # which is where consumers fetch it from.
-package: check-weaver
+package: require-weaver
 	@set -eu; \
 	version="$$($(MAKE) --no-print-directory -s print-version)"; \
 	repo_url="$$(git remote get-url origin)"; \
@@ -132,9 +133,9 @@ test: test-templates test-policies test-validations
 # change is made.
 #
 # A fixture import that matches nothing leaves the provenance filters untested, and weaver only
-# warns about it. Weaver wraps its text warnings to the terminal width, so the check reads the
-# typed JSON diagnostics instead, and prints their text for humans.
-test-templates: check-weaver check-jq
+# warns about it. Weaver wraps its text warnings to the terminal width, so the unmatched-import
+# check reads the typed JSON diagnostics instead, and prints their text for humans.
+test-templates: require-weaver require-jq
 	@mkdir -p .build
 	@rm -rf .build/test-docs
 	@set -e; \
@@ -173,7 +174,7 @@ test-templates: check-weaver check-jq
 
 # Refresh templates_test/golden/ after a template change that intentionally alters the generated
 # output, then review the diff under templates_test/golden/ before committing it.
-update-golden: check-weaver
+update-golden: require-weaver
 	rm -rf templates_test/golden
 	weaver registry generate -r $(FIXTURE) --v2 --templates templates markdown templates_test/golden
 
@@ -185,7 +186,7 @@ update-golden: check-weaver
 # every line of rego, which fails for a missing or unloaded test file as well as for an untested
 # rule. The coverage is compared here rather than with `--threshold`, as opa writes no report
 # (and so no uncovered lines) when the threshold is missed.
-test-policies: check-opa check-jq
+test-policies: require-opa require-jq
 	opa test --explain fails policies policies_test
 	@mkdir -p .build
 	@opa test --coverage --format json policies policies_test > .build/opa-coverage.json
@@ -202,7 +203,7 @@ test-policies: check-opa check-jq
 # here. The case is passed as MODEL, FIXTURE and REGISTRIES, so it is the registry whichever
 # target runs reads. validations_test/registries/ holds dependencies that cases share, and is not
 # a case itself. Needs network access.
-test-validations: check-weaver
+test-validations: require-weaver
 	@set -e; \
 	if [[ -z "$(VALIDATION_CASES)" ]]; then \
 	  echo "error: no cases found under validations_test/." >&2; \
@@ -235,7 +236,7 @@ install-opa:
 	.github/actions/setup-opa/install-opa.sh
 
 # Fail if weaver is not on PATH; warn if it is not the version pinned in versions.env.
-check-weaver:
+require-weaver:
 	@command -v weaver >/dev/null 2>&1 || { \
 	  echo "error: weaver not found on PATH. Run 'make install-weaver' to install the pinned" >&2; \
 	  echo "version, or put a release binary from https://github.com/open-telemetry/weaver/releases on PATH." >&2; \
@@ -247,7 +248,7 @@ check-weaver:
 	fi
 
 # Fail if opa is not on PATH; warn if it is not the version pinned in versions.env.
-check-opa:
+require-opa:
 	@command -v opa >/dev/null 2>&1 || { \
 	  echo "error: opa not found on PATH. Run 'make install-opa' to install the pinned version." >&2; \
 	  exit 1; \
@@ -258,7 +259,7 @@ check-opa:
 	fi
 
 # Fail if jq is not on PATH. GitHub's runners have it preinstalled.
-check-jq:
+require-jq:
 	@command -v jq >/dev/null 2>&1 || { \
 	  echo "error: jq not found on PATH. Install it from https://jqlang.org/download/." >&2; \
 	  exit 1; \
@@ -269,22 +270,22 @@ clean:
 	rm -rf .build
 
 help:
-	@echo "check-policies  validate the model (schema + dependencies + policies)"
-	@echo "check-dependencies  check the resolved dependency trees against the manifests"
-	@echo "generate-docs   regenerate committed markdown under docs/"
-	@echo "generate-all    run every regeneration this repo owns"
-	@echo "print-version   print the version at the end of the schema_url in model/manifest.yaml"
-	@echo "package         produce the publication artifacts under .build/package/"
-	@echo "test            run every test suite (templates + policies + validations)"
-	@echo "test-templates  check the doc templates against the golden fixture output"
-	@echo "test-policies   unit-test the local rego policies"
-	@echo "test-validations  check that validation fails on each invalid registry in validations_test/"
-	@echo "update-golden   refresh the golden files after an intended template change"
-	@echo "install-weaver  install the weaver version pinned in versions.env"
-	@echo "install-opa     install the OPA version pinned in versions.env"
-	@echo "clean           remove build output"
+	@echo "validate-registry      validate the registry (dependencies + schema + policies)"
+	@echo "validate-dependencies  verify the resolved dependency trees match the manifests"
+	@echo "generate-docs          regenerate committed markdown under docs/"
+	@echo "generate-all           run every regeneration this repo owns"
+	@echo "print-version          print the version at the end of model/manifest.yaml's schema_url"
+	@echo "package                produce the publication artifacts under .build/package/"
+	@echo "test                   run every test suite (templates + policies + validations)"
+	@echo "test-templates         compare the docs rendered from the fixture with the golden files"
+	@echo "test-policies          unit-test the local rego policies"
+	@echo "test-validations       confirm validation fails on each registry in validations_test/"
+	@echo "update-golden          refresh the golden files after an intended template change"
+	@echo "install-weaver         install the weaver version pinned in versions.env"
+	@echo "install-opa            install the OPA version pinned in versions.env"
+	@echo "clean                  remove build output"
 
-# awk program for check-dependencies. Reads the manifest.yaml and resolved.yaml that
+# awk program for validate-dependencies. Reads the manifest.yaml and resolved.yaml that
 # `weaver registry package` wrote for one registry (named by -v registry) and prints one line per
 # problem. Both files are weaver's own output, so their layout does not depend on how the source
 # manifest was written. A registry's name is its schema_url minus the scheme and the last segment.
