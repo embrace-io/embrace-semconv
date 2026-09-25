@@ -1,0 +1,8 @@
+# Defines an attribute that no attribute group exports, which the local public-attribute-groups
+# policy must reject. Catches what the OPA unit tests can't: the policy no longer running in weaver
+# (e.g. it and its tests moved to a `package` that names no stage weaver runs) or no longer matching
+# the input weaver actually gives it.
+
+schema_url: https://embrace.io/schemas/validations-test-case/0.0.0-dev
+description: Case with an attribute that only the local policy rejects.
+stability: development

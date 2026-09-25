@@ -1,0 +1,1 @@
+declares https://opentelemetry.io/cool-schemas/1.44.0, but no registry in its dependency tree identifies as that

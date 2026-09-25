@@ -32,9 +32,11 @@ templates/                weaver Jinja2 templates for docs generation
 templates_test/           fixture registry + golden output for the template regression test
 policies/                 local rego policies run by `make check-policies`
 policies_test/            OPA unit tests for those policies
+validations_test/         invalid registries that validation must fail on (`make test-validations`)
 docs/                     generated markdown
 Makefile                  validation / docs generation / tests / packaging (`make help`)
 versions.env              pinned weaver, OPA and shared policy pack versions
+.weaver.toml              empty, so no parent directory's .weaver.toml can change weaver's behavior
 ```
 
 ## Versioning
@@ -51,9 +53,11 @@ See [RELEASING.md](RELEASING.md) for how a version is cut.
 ## Dependencies
 
 The core OpenTelemetry registry is pinned to a release tag in `model/manifest.yaml`, declared as
-`schema_url` + `registry_path`. `make check-policies` fails if the two name different releases.
+`schema_url` + `registry_path`. `make check-policies` fails if the `schema_url` doesn't name the
+registry and version that `registry_path` fetches.
 
-Weaver resolves a single version of each registry for the whole dependency graph. When a
+Weaver resolves a single version of each registry for the whole dependency graph, and
+`make check-policies` fails if the graph requests any registry at more than one version. When a
 dependency that itself depends on core is added (such as the client-side registry), keep the core
 version in `model/manifest.yaml` in lockstep with it.
 
@@ -63,12 +67,13 @@ version in `model/manifest.yaml` in lockstep with it.
 are not available via package managers like Homebrew at the pinned versions, but `make
 install-weaver` and `make install-opa` download the release binaries pinned in
 [`versions.env`](versions.env) and install them to `~/.local/bin`. To update either, change its
-version in `versions.env` and rerun the target.
+version in `versions.env` and rerun the target. The tests also need
+[jq](https://jqlang.org/download/) on `PATH`.
 
 ```bash
 make check-policies   # validate the model: dependency resolution + shared OTel and local policies
 make generate-all     # regenerate docs/ from the model
-make test             # template regression test + rego policy unit tests
+make test             # template and validation regression tests + rego policy unit tests
 make package          # produce publication manifest and resolved registry under .build/package/
 make help             # list every target
 ```
@@ -197,10 +202,10 @@ federated registry and declare this one as a dependency.
    ```
 
    `schema_url` identifies the registry and its version, while `registry_path` is where the files
-   are actually fetched from. Weaver does not check that the two agree while resolving a
-   dependency, so bumping one without the other could result in an unexpected version being pulled
-   in (i.e. the one in `registry_path` will be used). This repo's `make check-policies` enforces
-   that for its own dependencies.
+   are actually fetched from. Weaver doesn't fail when the two disagree (at most it warns), so
+   bumping one without the other could result in an unexpected version being pulled in (i.e. the
+   one in `registry_path` will be used). This repo's `make check-policies` enforces that they agree
+   for its own dependencies.
 
    A registry only sees what its direct dependencies define, so to also `ref` core attributes,
    declare core as a dependency too, at the same version this registry uses.

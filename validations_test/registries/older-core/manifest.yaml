@@ -1,0 +1,9 @@
+# Dependency for the validations_test cases: a registry that depends on an older core than this
+# repo. Not a case itself.
+
+schema_url: https://embrace.io/schemas/validations-test-older-core/0.0.0-dev
+description: Registry that depends on core 1.43.0.
+stability: development
+dependencies:
+  - schema_url: https://opentelemetry.io/schemas/1.43.0
+    registry_path: https://github.com/open-telemetry/semantic-conventions@v1.43.0[model]

@@ -1,0 +1,8 @@
+# Declares core 1.44.0 but fetches the v1.43.0 tag.
+
+schema_url: https://embrace.io/schemas/validations-test-case/0.0.0-dev
+description: Case where a dependency's schema_url names a different version than it fetches.
+stability: development
+dependencies:
+  - schema_url: https://opentelemetry.io/schemas/1.44.0
+    registry_path: https://github.com/open-telemetry/semantic-conventions@v1.43.0[model]

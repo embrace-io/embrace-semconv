@@ -1,0 +1,17 @@
+file_format: definition/2
+
+# The group exports the attribute, so the local policy has nothing to reject.
+attribute_groups:
+  - id: registry.validations_test
+    visibility: public
+    stability: development
+    brief: Group that exports the attribute.
+    attributes:
+      - ref: nonamespace
+
+attributes:
+  - key: nonamespace
+    type: string
+    stability: development
+    brief: Attribute whose key has no namespace.
+    examples: ["x"]

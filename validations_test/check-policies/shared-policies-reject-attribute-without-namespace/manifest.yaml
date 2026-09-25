@@ -1,0 +1,6 @@
+# Defines an attribute without a namespace, which the shared policy pack's naming rules must reject.
+# Fails if the pack stops running, e.g. after a bump of POLICY_REPO_REF that renames its packages.
+
+schema_url: https://embrace.io/schemas/validations-test-case/0.0.0-dev
+description: Case with an attribute that only the shared policy pack rejects.
+stability: development

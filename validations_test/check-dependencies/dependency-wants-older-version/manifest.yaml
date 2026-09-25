@@ -1,0 +1,11 @@
+# Depends on core 1.44.0 directly and, through older-core, on core 1.43.0. Weaver uses 1.44.0
+# without a warning, so older-core runs against a core it was never validated with.
+
+schema_url: https://embrace.io/schemas/validations-test-case/0.0.0-dev
+description: Case where a dependency requests an older version of a registry than this one.
+stability: development
+dependencies:
+  - schema_url: https://embrace.io/schemas/validations-test-older-core/0.0.0-dev
+    registry_path: validations_test/registries/older-core
+  - schema_url: https://opentelemetry.io/schemas/1.44.0
+    registry_path: https://github.com/open-telemetry/semantic-conventions@v1.44.0[model]

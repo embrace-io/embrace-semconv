@@ -30,9 +30,11 @@ templates/registry/markdown/   # doc-generation templates (this repo emits docs,
 templates_test/        # fixture registry + golden output for the template regression test
 policies/              # local weaver policy (public attribute groups)
 policies_test/         # OPA unit tests for policies/
+validations_test/      # invalid registries validation must fail on: <make target>/<case>/
 docs/                  # GENERATED markdown — do not hand-edit; regenerate
 Makefile               # validation, docs, tests, packaging (`make help`); CI runs its targets
 versions.env           # pinned weaver + OPA + shared policy pack versions
+.weaver.toml           # deliberately empty: stops weaver picking up one from a parent directory
 .github/               # workflows/ (check.yaml, release.yml), actions/ (setup-weaver, setup-opa,
                        # assert-no-drift)
 ```
@@ -41,13 +43,14 @@ versions.env           # pinned weaver + OPA + shared policy pack versions
 
 - **Identity is `schema_url`.** Weaver splits it at the last `/` into the registry's name and
   version; there is no `name:` field. Every dependency is `schema_url` + `registry_path`, and the
-  two must change together — weaver does not check they agree, so `make check-policies` does for
-  any `registry_path` pinned to a release tag.
+  two must change together — weaver never fails when they disagree (at most it warns), so
+  `make check-dependencies` (run by `make check-policies`) fails unless each `schema_url` matches
+  the manifest of the registry its `registry_path` fetches.
 - **Core OTel** is pinned to a release tag in `model/manifest.yaml`.
-- Weaver resolves **one** version per registry for the whole dependency graph, only warning when
-  requests differ. `make check-policies` turns that warning into a failure, so when a dependency
-  that itself depends on core is added (e.g. client-side), keep this repo's core pin in lockstep
-  with it.
+- Weaver resolves **one** version per registry for the whole dependency graph (the highest), and
+  warns only when it drops a version the root requested. `make check-dependencies` fails whenever
+  the graph requests a registry at more than one version, so when a dependency that itself depends
+  on core is added (e.g. client-side), keep this repo's core pin in lockstep with it.
 - A registry sees only what its **direct** dependencies define: core attributes would not be
   reachable through client-side, so core stays a direct dependency even once client-side is added.
 
@@ -85,7 +88,7 @@ dependencies:
 
 Pin an exact tag, never a branch. `schema_url` and `registry_path` name the same release and must
 move together: weaver fetches from `registry_path` but identifies the dependency (for version
-conflicts and provenance) by `schema_url`, and does not check that they agree. See `README.md` for
+conflicts and provenance) by `schema_url`, and never fails when they disagree. See `README.md` for
 the full consuming guide.
 
 ## Extending it (add or change an attribute)
@@ -105,14 +108,22 @@ them as `events:` blocks that `ref` attributes, the same way groups do.
 
 Weaver and OPA are pinned in `versions.env`; install them with `make install-weaver` /
 `make install-opa`, or ensure the pinned versions are on `PATH` (the Makefile warns on a mismatch).
+The tests also need `jq`.
 
 - **`make check-policies`** — validates the schema, resolves the dependencies, and runs the
   shared + local policies. Must pass.
 - **`make generate-all`** — regenerates `docs/`. Docs are committed and CI fails on drift, so
   regenerate and commit them together. **Never hand-edit `docs/`.**
 - **`make test`** — `make test-templates` (renders the fixture under `templates_test/` and diffs it
-  against `templates_test/golden/`) and `make test-policies` (OPA unit tests). After an intended
-  template change, refresh the golden files with `make update-golden` and review the diff.
+  against `templates_test/golden/`), `make test-policies` (OPA unit tests, which must cover every
+  line of rego) and `make test-validations` (runs each validating make target against the invalid
+  registries under `validations_test/<make target>/` and confirms it fails on each with the
+  expected error). After an intended template change, refresh the golden files with
+  `make update-golden` and review the diff.
+- **Adding a validation?** Add a case under `validations_test/<make target>/<case>/`: a registry
+  that is invalid in the way the validation catches, plus an `expected-error.txt` holding text its
+  error must contain. `test-validations` runs the target with the case as `MODEL`, `FIXTURE` and
+  `REGISTRIES`.
 
 These are exactly the jobs in `.github/workflows/check.yaml`, so running them locally predicts CI.
 Standard hygiene otherwise: commit only when asked, keep messages focused.

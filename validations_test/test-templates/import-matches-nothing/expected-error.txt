@@ -1,0 +1,1 @@
+attribute_groups: registry.validations_test.a_group_id_that_no_dependency_exports_anywhere
