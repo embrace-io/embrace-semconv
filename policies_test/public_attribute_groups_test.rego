@@ -27,7 +27,7 @@ local_group(keys) := {
 	"attributes": [{"key": key} | some key in keys],
 }
 
-# An imported signal group keeps a populated `path` pointing at the upstream
+# An imported signal group keeps a populated `path` pointing at the dependency's
 # file, which is why `path` cannot be used to tell local from inherited.
 imported_group(keys) := {
 	"id": "registry.session",

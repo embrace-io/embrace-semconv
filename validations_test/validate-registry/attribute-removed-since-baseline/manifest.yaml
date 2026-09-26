@@ -1,0 +1,7 @@
+# A later version of validations_test/registries/two-attributes that removes an attribute, which the
+# shared pack's backwards-compatibility policies must reject. They only run against a baseline, so
+# this also fails if validate-registry stops passing one.
+
+schema_url: https://embrace.io/schemas/validations-test-case/0.0.1
+description: Case that removes an attribute its baseline defines.
+stability: development

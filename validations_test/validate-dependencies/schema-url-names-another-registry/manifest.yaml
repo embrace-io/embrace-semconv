@@ -1,6 +1,6 @@
-# Names core with a mistyped path. Weaver treats `opentelemetry.io/cool-schemas` as a registry
-# unrelated to the `opentelemetry.io/schemas` it fetches, so version conflicts with core elsewhere
-# in the tree would go unnoticed.
+# Names the core registry with a mistyped path. Weaver treats `opentelemetry.io/cool-schemas` as a
+# registry unrelated to the `opentelemetry.io/schemas` it fetches, so version conflicts with the
+# core registry elsewhere in the tree would go unnoticed.
 
 schema_url: https://embrace.io/schemas/validations-test-case/0.0.0-dev
 description: Case where a dependency's schema_url names a different registry than it fetches.

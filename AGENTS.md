@@ -4,7 +4,8 @@
 
 The canonical, cross-platform [OpenTelemetry semantic conventions](https://opentelemetry.io/docs/concepts/semantic-conventions/)
 registry for Embrace's `emb.*` namespace. It is a **federated** registry (OTEP 4815, weaver
-`definition/2`) that depends on the core OTel semantic conventions. It will also depend on the
+`definition/2`) that depends on the core registry (the OpenTelemetry semantic conventions). It
+will also depend on the
 [client-side semantic conventions](https://github.com/open-telemetry/semantic-conventions-client-side)
 registry once that publishes a release. It offers the same make targets as the other OpenTelemetry
 semantic-convention registries.
@@ -24,7 +25,7 @@ starter set of attributes and will expand over time.
 
 ```
 model/
-  manifest.yaml        # registry identity + version (schema_url), dependencies (core OTel)
+  manifest.yaml        # registry identity + version (schema_url), dependencies (the core registry)
   emb/registry.yaml    # emb.* attribute definitions + the attribute_group that bundles them
 templates/registry/markdown/   # doc-generation templates (this repo emits docs, not code)
 templates_test/        # fixture registry + golden output for the template regression test
@@ -46,13 +47,15 @@ versions.env           # pinned weaver + OPA + shared policy pack versions
   two must change together — weaver never fails when they disagree (at most it warns), so
   `make validate-dependencies` (run by `make validate-registry`) fails unless each `schema_url`
   matches the manifest of the registry its `registry_path` fetches.
-- **Core OTel** is pinned to a release tag in `model/manifest.yaml`.
+- **The core registry** is pinned to a release tag in `model/manifest.yaml`.
 - Weaver resolves **one** version per registry for the whole dependency graph (the highest), and
   warns only when it drops a version the root requested. `make validate-dependencies` fails
   whenever the graph requests a registry at more than one version, so when a dependency that itself
-  depends on core is added (e.g. client-side), keep this repo's core pin in lockstep with it.
-- A registry sees only what its **direct** dependencies define: core attributes would not be
-  reachable through client-side, so core stays a direct dependency even once client-side is added.
+  depends on the core registry is added (e.g. client-side), keep this repo's core registry pin in
+  lockstep with it.
+- A registry sees only what its **direct** dependencies define: the core registry's attributes
+  would not be reachable through client-side, so the core registry stays a direct dependency even
+  once client-side is added.
 
 ## Mental model: how federated weaver generation works
 
@@ -68,9 +71,9 @@ The rules that govern this repo **and** every consumer:
 - weaver **merges** every file under the registry dir plus all dependency registries into one model,
   then resolves `ref`s. The source *filename* is organizational only.
 - **The `ref` drives generation, not the definition.** A group produces output for every attribute
-  it refs — wherever that attribute is defined (here, a dependency, or core OTel). An attribute that
-  is defined but ref'd by no group generates nothing. A `ref` that resolves to nothing is a hard
-  error (a useful safety net).
+  it refs — wherever that attribute is defined (here, a dependency, or the core registry). An
+  attribute that is defined but ref'd by no group generates nothing. A `ref` that resolves to
+  nothing is a hard error (a useful safety net).
 - Consumers declare this repo as a dependency and `ref` its attributes from their *own* groups, so
   the definition here becomes a constant in the consumer's generated class. Definitions live once
   (here); each SDK generates its own constants.
@@ -112,7 +115,9 @@ Weaver and OPA are pinned in `versions.env`; install them with `make install-wea
 The tests also need `jq`.
 
 - **`make validate-registry`** — validates the registry: the resolved dependency trees
-  (`make validate-dependencies`), then the schema, then the shared + local policies. Must pass.
+  (`make validate-dependencies`), then the schema, then the shared + local policies, including
+  the shared pack's backwards-compatibility policies against the latest release tag (`BASELINE`
+  overrides it; empty skips it). Must pass.
 - **`make generate-all`** — regenerates `docs/`. Docs are committed, and CI fails when the
   committed docs don't match what this generates, so regenerate and commit them together.
   **Never hand-edit `docs/`.**
@@ -125,7 +130,8 @@ The tests also need `jq`.
 - **Adding a validation?** Add a case under `validations_test/<make target>/<case>/`: a registry
   that is invalid in the way the validation catches, plus an `expected-error.txt` holding text its
   error must contain. `test-validations` runs the target with the case as `MODEL`, `FIXTURE` and
-  `REGISTRIES`.
+  `REGISTRIES`. A case that needs a baseline names a registry under `validations_test/registries/`
+  in its `baseline.txt`.
 
 CI runs the same targets in the `CI validation` workflow (`.github/workflows/ci-validation.yaml`),
 one job per target and named after it. Its `validate-docs` job runs `make generate-all` and fails
@@ -140,6 +146,22 @@ Consumers pin exact tags and **tags are immutable**: fix a bad release with a ne
 re-tag. Only the version segment ever moves: the rest of `schema_url`
 (`embrace.io/schemas/embrace`) is the registry's identity, and changing it makes a different
 registry, not a new version.
+
+## Terms
+
+Use these consistently in docs, comments and commit messages:
+
+- **registry**: the conventions weaver resolves from `model/`, identified by its `schema_url`
+  (not "model" or "schema"). **Registry name**: the `schema_url` up to the version.
+- **core registry**: the OpenTelemetry semantic conventions registry (never bare "core" or
+  "upstream"). **Dependency**: any registry declared in the manifest.
+- **validate**: what `validate-*` targets do (fail on an invalid registry or stale docs).
+  **test**: what `test-*` targets do. **check**: only `weaver registry check`.
+- **invalid registry** / **case**: a registry under `validations_test/` a validation must fail on.
+  **fixture** / **golden files**: the templates' test input and expected output.
+- **baseline**: the release `validate-registry` compares the registry with.
+- **shared policy pack** (the pinned `opentelemetry-weaver-packages` policies) vs **local policy**
+  (under `policies/`).
 
 ## Pointers
 

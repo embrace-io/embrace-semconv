@@ -10,8 +10,21 @@ Everything else that requires the version derives it by parsing that file.
 
 ## When to release
 
-Only when `model/` has changed since the last tag. The model is everything consumers get through
-`…@<tag>[model]`; changes to the Makefile, templates, generated docs or CI don't need a release.
+Make a new release when there are changes in the registry that a dependent wants to consume.
+
+When is a registry considered to be changed? Only when the generated published artifacts are
+different than those of the current release. For example, when a convention is
+added/modified/deprecated, or if a dependency is bumped. Reorganizing the contents of `model/`
+without changing any conventions (e.g. moving conventions from one file to another) produces
+identical artifacts, so a release is not needed. The same goes for changes to the Makefile,
+templates, generated docs, or CI workflows/actions.
+
+To tell, run `make package` on `main` before bumping the version, and compare its resolved
+registry with the last release's. No output means there is nothing to release:
+
+```bash
+gh release download v<previous-version> -p resolved.yaml -O - | diff - .build/package/resolved.yaml
+```
 
 ## How to release
 
@@ -28,9 +41,10 @@ Only when `model/` has changed since the last tag. The model is everything consu
      change the published artifacts, as the notes should cover only what changed in the published
      registry, i.e. under `model/`. Use
      `git log --oneline v<previous-version>..origin/main -- model` to list the commits that
-     touched the model if you need help curating this list.
+     touched `model/` if you need help curating this list.
    - Save the release as draft. Do not publish!
-   - Optional: check that a release draft exists with the right tag. This should print `v<version>`:
+   - Optional: confirm that a release draft exists with the right tag. This should print
+     `v<version>`:
 
      ```bash
      gh api repos/embrace-io/embrace-semconv/releases --jq '.[] | select(.draft) | .tag_name'
@@ -40,7 +54,7 @@ Only when `model/` has changed since the last tag. The model is everything consu
    - Derive the tag from the manifest. The release will fail if the git tag already exists, or if
      no matching draft is waiting. The latter should be created in step #2.
    - Validate the registry (i.e. running `make validate-registry`): its dependencies, schema, and
-     the shared and local policies.
+     the shared and local policies, including backwards compatibility with the last release.
    - Package the publication artifacts (i.e. running `make package`).
    - Attach `manifest.yaml` and `resolved.yaml` to the draft and publish it, creating the
      `v<version>` tag at the workflow's commit.

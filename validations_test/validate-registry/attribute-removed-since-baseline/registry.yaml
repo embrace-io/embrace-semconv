@@ -1,0 +1,16 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: registry.validations_test
+    visibility: public
+    stability: development
+    brief: Group that exports the remaining attribute.
+    attributes:
+      - ref: validations_test.kept
+
+attributes:
+  - key: validations_test.kept
+    type: string
+    stability: development
+    brief: Attribute that later versions keep.
+    examples: ["x"]

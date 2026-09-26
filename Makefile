@@ -15,6 +15,15 @@ FIXTURE := templates_test/fixture
 # Registries whose dependency trees validate-dependencies verifies.
 REGISTRIES := $(MODEL) $(FIXTURE)
 
+# This repo's GitHub URL, from the origin remote, for release artifact URIs and the baseline.
+REPO_URL := $(subst git@github.com:,https://github.com/,$(patsubst %.git,%,\
+	$(shell git remote get-url origin 2>/dev/null)))
+
+# The baseline validate-registry compares this registry with, to catch breaking changes. `auto`
+# uses the highest vX.Y.Z release tag on origin. Any other value is used as the baseline registry
+# path, while an empty value skips the comparison.
+BASELINE := auto
+
 # Invalid registries that test-validations expects a make target to fail on:
 # validations_test/<target>/<case>/.
 VALIDATION_CASES := $(patsubst %/expected-error.txt,%,\
@@ -35,20 +44,40 @@ all: validate-registry generate-all
 # A policy that loads but never runs (e.g. its `package` names no stage weaver runs) or no longer
 # matches weaver's input passes silently, so validations_test/validate-registry/ holds an invalid
 # registry for each policy set, which this target must fail on.
+#
+# The shared pack's backwards-compatibility policies only run against a baseline (see BASELINE):
+# compared with the last release, no attribute or signal may be removed and nothing stable may
+# change incompatibly. With no release tag there is no baseline, so they're skipped, and
+# pre-release tags (e.g. v0.4.0-dev) are never baselines.
 validate-registry: require-weaver validate-dependencies
-	@weaver registry check \
+	@set -e; \
+	baseline="$(BASELINE)"; \
+	if [[ "$$baseline" == auto ]]; then \
+	  tag="$$(git ls-remote --tags --refs origin 'v*' 2>/dev/null | awk "$$LATEST_RELEASE_TAG")"; \
+	  baseline="$${tag:+$(REPO_URL)@$$tag[$(MODEL)]}"; \
+	fi; \
+	baseline_args=(); \
+	if [[ -n "$$baseline" ]]; then \
+	  echo "Comparing against the baseline $$baseline"; \
+	  baseline_args=(--baseline-registry "$$baseline"); \
+	else \
+	  echo "No baseline (BASELINE is empty, or origin has no release tag): skipping the"; \
+	  echo "backwards-compatibility policies"; \
+	fi; \
+	weaver registry check \
 	  -r $(MODEL) \
 	  --v2 \
 	  --policy "$(POLICY_REPO_URL)@$(POLICY_REPO_REF)[policies/check]" \
-	  --policy policies/check/public-attribute-groups
+	  --policy policies/check/public-attribute-groups \
+	  "$${baseline_args[@]}"
 
 # Verify the dependency tree weaver actually resolves for each of REGISTRIES, rather than what their
 # manifests declare. The resolved registry that `weaver registry package` writes lists every
 # registry in the tree, each under the schema_url in its own manifest. Two things must hold there:
 # - No registry is in the tree at more than one version. When two registries request different
-#   versions of one (e.g. this registry and one of its dependencies both depend on core), weaver
-#   uses the highest, so some registry runs against a version it was not validated with. Weaver
-#   warns only when the dropped version is the one the root requested.
+#   versions of one (e.g. this registry and one of its dependencies both depend on the core
+#   registry), weaver uses the highest, so some registry runs against a version it was not
+#   validated with. Weaver warns only when the dropped version is the one the root requested.
 # - Every schema_url a manifest declares is in the tree. A dependency's registry_path is what
 #   weaver fetches, and weaver keys the registry by the declared schema_url without checking it
 #   against the fetched registry's own. A schema_url naming another version or registry (a typo in
@@ -81,9 +110,9 @@ validate-dependencies: require-weaver
 	  exit 1; \
 	fi
 
-# Regenerate the committed markdown under docs/ from the model. Needs network access. CI fails
-# when the committed docs don't match what this generates, so run this before submitting model or
-# template changes and commit the result.
+# Regenerate the committed markdown under docs/ from the registry. Needs network access. CI fails
+# when the committed docs don't match what this generates, so run this before submitting registry
+# or template changes and commit the result.
 generate-docs: require-weaver
 	rm -rf docs
 	weaver registry generate -r $(MODEL) --v2 --templates templates markdown docs
@@ -111,16 +140,11 @@ print-version:
 package: require-weaver
 	@set -eu; \
 	version="$$($(MAKE) --no-print-directory -s print-version)"; \
-	repo_url="$$(git remote get-url origin)"; \
-	repo_url="$${repo_url%.git}"; \
-	case "$$repo_url" in \
-	  git@github.com:*) repo_url="https://github.com/$${repo_url#git@github.com:}" ;; \
-	esac; \
 	rm -rf .build/package; \
 	weaver registry package \
 	  -r $(MODEL) \
 	  --v2 \
-	  --resolved-registry-uri "$$repo_url/releases/download/v$$version/resolved.yaml" \
+	  --resolved-registry-uri "$(REPO_URL)/releases/download/v$$version/resolved.yaml" \
 	  -o .build/package; \
 	echo "packaged version $$version -> .build/package"
 
@@ -133,8 +157,8 @@ test: test-templates test-policies test-validations
 # change is made.
 #
 # A fixture import that matches nothing leaves the provenance filters untested, and weaver only
-# warns about it. Weaver wraps its text warnings to the terminal width, so the unmatched-import
-# check reads the typed JSON diagnostics instead, and prints their text for humans.
+# warns about it. Weaver wraps its text warnings to the terminal width, so this test reads the
+# typed JSON diagnostics instead, and prints their text for humans.
 test-templates: require-weaver require-jq
 	@mkdir -p .build
 	@rm -rf .build/test-docs
@@ -201,8 +225,9 @@ test-policies: require-opa require-jq
 # and `make <target>` must fail on it with an error containing the text in its
 # expected-error.txt, so a validation that stops failing, or fails for another reason, shows up
 # here. The case is passed as MODEL, FIXTURE and REGISTRIES, so it is the registry whichever
-# target runs reads. validations_test/registries/ holds dependencies that cases share, and is not
-# a case itself. Needs network access.
+# target runs reads. BASELINE is empty unless the case has a baseline.txt naming a baseline
+# registry. validations_test/registries/ holds dependencies and baselines that cases share, and is
+# not a case itself. Needs network access.
 test-validations: require-weaver
 	@set -e; \
 	if [[ -z "$(VALIDATION_CASES)" ]]; then \
@@ -213,8 +238,10 @@ test-validations: require-weaver
 	for case in $(VALIDATION_CASES); do \
 	  target="$${case#validations_test/}"; \
 	  target="$${target%%/*}"; \
+	  baseline=""; \
+	  if [[ -f "$$case/baseline.txt" ]]; then baseline="$$(< "$$case/baseline.txt")"; fi; \
 	  if $(MAKE) --no-print-directory "$$target" MODEL="$$case" FIXTURE="$$case" \
-	      REGISTRIES="$$case" > .build/test-validations.log 2>&1; then \
+	      REGISTRIES="$$case" BASELINE="$$baseline" > .build/test-validations.log 2>&1; then \
 	    echo "error: make $$target passed on the invalid registry $$case." >&2; \
 	    exit 1; \
 	  fi; \
@@ -322,6 +349,19 @@ function registry_name(url) { sub(/^[^:]*:\/\//, "", url); sub(/\/[^\/]*$$/, "",
 function url_version(url) { sub(/^.*\//, "", url); return url }
 endef
 export DEPENDENCY_PROBLEMS
+
+# awk program for validate-registry: reads `git ls-remote --tags --refs` output and prints the
+# highest vX.Y.Z tag. Tags with a pre-release or build suffix are not baselines.
+define LATEST_RELEASE_TAG
+{ tag = $$2; sub(/^refs\/tags\//, "", tag) }
+tag ~ /^v[0-9]+\.[0-9]+\.[0-9]+$$/ {
+  split(substr(tag, 2), part, ".")
+  key = sprintf("%09d%09d%09d", part[1], part[2], part[3])
+  if (key > best_key) { best_key = key; best = tag }
+}
+END { if (best != "") print best }
+endef
+export LATEST_RELEASE_TAG
 
 # jq program for test-templates: one line per import that matched nothing, from weaver's JSON
 # diagnostics.
