@@ -1,0 +1,5 @@
+file_format: definition/2
+
+imports:
+  attribute_groups:
+    - "registry.validations_test.missing_group"

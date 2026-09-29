@@ -1,0 +1,1 @@
+attribute_groups: registry.validations_test.missing_group

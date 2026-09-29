@@ -7,7 +7,7 @@ name: Release
 # workflow won't create one if it was accidentally invoked without the draft being
 # already present. The version is never passed in either: it is read from
 # the schema_url in model/manifest.yaml, which is the single source of truth for
-# this registry's identity and version.
+# this registry's identity and version. It releases only from the default branch.
 
 on:
   workflow_dispatch:
@@ -26,12 +26,22 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # write permission is needed to attach the publication artifacts to the
-    # release, create the tag, and publish the release.
     permissions:
-      contents: write
+      contents: write  # to attach the artifacts to the draft, create the tag, and publish it
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      # The tag is created at the commit the workflow runs on, so only the default branch may
+      # release.
+      - name: Refuse a branch other than the default branch
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [ "$REF_NAME" != "$DEFAULT_BRANCH" ]; then
+            echo "::error::Releases are made from '${DEFAULT_BRANCH}', but this run is on '${REF_NAME}'. Pick '${DEFAULT_BRANCH}' under 'Use workflow from'."
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -103,6 +113,19 @@ jobs:
 
       - name: Package publication artifacts
         run: make package
+
+      # The manifest is published as is, so its URI must be exactly this release's resolved.yaml,
+      # with nothing more in it (a token picked up from git's URL rewriting, say).
+      - name: Check the packaged manifest's resolved_registry_uri
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          expected="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/resolved.yaml"
+          actual=$(awk '/^resolved_registry_uri:/ { print $2; exit }' .build/package/manifest.yaml)
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::manifest.yaml's resolved_registry_uri is not ${expected}: refusing to publish it."
+            exit 1
+          fi
 
       - name: Upload artifacts to the draft
         env:
