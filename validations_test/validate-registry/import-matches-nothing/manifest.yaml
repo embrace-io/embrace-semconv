@@ -1,0 +1,9 @@
+# Imports a group that no dependency exports. Weaver only warns, so the registry would silently
+# lack what it meant to include; validate-registry must fail instead.
+
+schema_url: https://embrace.io/schemas/validations-test-case/0.0.0-dev
+description: Case whose own import matches nothing in any dependency.
+stability: development
+dependencies:
+  - schema_url: https://opentelemetry.io/schemas/1.44.0
+    registry_path: https://github.com/open-telemetry/semantic-conventions@v1.44.0[model]

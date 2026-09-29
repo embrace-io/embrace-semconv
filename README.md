@@ -336,7 +336,7 @@ generated with `kotlin` as the `<your-target>`:
 # weaver.yaml
 templates:
   - pattern: attributes.kt.j2
-    # One file per attribute group: the groups your registry defines plus any it imports.
+    # One file per public attribute group your registry defines. Imported groups aren't listed.
     filter: .registry.attribute_groups // []
     application_mode: each
     file_name: "{{ ctx.id | split('.') | last | pascal_case }}Attributes.kt"
@@ -354,8 +354,10 @@ object {{ ctx.id | split('.') | last | pascal_case }}Attributes {
 ```
 
 With the `ref` example above, that generates `WebsessionAttributes.kt` containing
-`EMB_USER_SESSION_ID` and `SESSION_ID`, plus `EmbAttributes.kt` if you also import
-`registry.embrace.emb`. Pointed directly at this registry, the same templates generate
+`EMB_USER_SESSION_ID` and `SESSION_ID`. An imported group is not listed in
+`.registry.attribute_groups`: weaver adds its attributes to `.registry.attributes` instead, each
+with the `provenance.source` of the registry it came from, so a template covers them by iterating
+`.registry.attributes`. Pointed directly at this registry, the same templates generate
 `EmbAttributes.kt`.
 
 Every definition carries `provenance.source`: the `schema_url` of the registry it came from,

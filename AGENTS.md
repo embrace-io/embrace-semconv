@@ -73,7 +73,8 @@ The rules that govern this repo **and** every consumer:
 - **The `ref` drives generation, not the definition.** A group produces output for every attribute
   it refs — wherever that attribute is defined (here, a dependency, or the core registry). An
   attribute that is defined but ref'd by no group generates nothing. A `ref` that resolves to
-  nothing is a hard error (a useful safety net).
+  nothing is a hard error (a useful safety net), and so is an import that matches nothing: weaver
+  only warns about it, and `make validate-registry` fails on it.
 - Consumers declare this repo as a dependency and `ref` its attributes from their *own* groups, so
   the definition here becomes a constant in the consumer's generated class. Definitions live once
   (here); each SDK generates its own constants.

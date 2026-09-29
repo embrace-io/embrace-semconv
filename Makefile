@@ -15,13 +15,17 @@ FIXTURE := templates_test/fixture
 # Registries whose dependency trees validate-dependencies verifies.
 REGISTRIES := $(MODEL) $(FIXTURE)
 
-# This repo's GitHub URL, from the origin remote, for release artifact URIs and the baseline.
-REPO_URL := $(subst git@github.com:,https://github.com/,$(patsubst %.git,%,\
-	$(shell git remote get-url origin 2>/dev/null)))
+# This repo's GitHub URL, for release artifact URIs and the baseline: the origin remote's URL.
+# Origin is read from git's raw config, not with `git remote get-url`, which applies `insteadOf`
+# rewrites and could return a URL with a token in it; any user info left in the URL is dropped.
+# When origin is a fork, set REPO_URL to https://github.com/embrace-io/embrace-semconv.
+REPO_URL := $(shell git config --get remote.origin.url 2>/dev/null | sed -E \
+	-e 's|^git@github\.com:|https://github.com/|' -e 's|^(https?://)[^/@]*@|\1|' -e 's|\.git$$||')
 
 # The baseline validate-registry compares this registry with, to catch breaking changes. `auto`
-# uses the highest vX.Y.Z release tag on origin. Any other value is used as the baseline registry
-# path, while an empty value skips the comparison.
+# uses the highest vX.Y.Z release tag of REPO_URL, and validate-registry fails if it can't list
+# them. Any other value is used as the baseline registry path, while an empty value skips the
+# comparison.
 BASELINE := auto
 
 # Invalid registries that test-validations expects a make target to fail on:
@@ -43,17 +47,24 @@ all: validate-registry generate-all
 #
 # A policy that loads but never runs (e.g. its `package` names no stage weaver runs) or no longer
 # matches weaver's input passes silently, so validations_test/validate-registry/ holds an invalid
-# registry for each policy set, which this target must fail on.
+# registry for each policy set, which this target must fail on. An import that matches nothing
+# fails it too (see RUN_WEAVER).
 #
 # The shared pack's backwards-compatibility policies only run against a baseline (see BASELINE):
 # compared with the last release, no attribute or signal may be removed and nothing stable may
 # change incompatibly. With no release tag there is no baseline, so they're skipped, and
 # pre-release tags (e.g. v0.4.0-dev) are never baselines.
-validate-registry: require-weaver validate-dependencies
+validate-registry: require-weaver require-jq validate-dependencies
 	@set -e; \
 	baseline="$(BASELINE)"; \
 	if [[ "$$baseline" == auto ]]; then \
-	  tag="$$(git ls-remote --tags --refs origin 'v*' 2>/dev/null | awk "$$LATEST_RELEASE_TAG")"; \
+	  if ! tags="$$(git ls-remote --tags --refs "$(REPO_URL)" 'v*')"; then \
+	    echo "error: could not list the release tags of '$(REPO_URL)' (REPO_URL) to find the" >&2; \
+	    echo "baseline. When origin is a fork, set REPO_URL to the repo it was forked from;" >&2; \
+	    echo "otherwise set BASELINE to a registry path, or empty to skip the comparison." >&2; \
+	    exit 1; \
+	  fi; \
+	  tag="$$(awk "$$LATEST_RELEASE_TAG" <<< "$$tags")"; \
 	  baseline="$${tag:+$(REPO_URL)@$$tag[$(MODEL)]}"; \
 	fi; \
 	baseline_args=(); \
@@ -61,10 +72,10 @@ validate-registry: require-weaver validate-dependencies
 	  echo "Comparing against the baseline $$baseline"; \
 	  baseline_args=(--baseline-registry "$$baseline"); \
 	else \
-	  echo "No baseline (BASELINE is empty, or origin has no release tag): skipping the"; \
+	  echo "No baseline (BASELINE is empty, or $(REPO_URL) has no release tag): skipping the"; \
 	  echo "backwards-compatibility policies"; \
 	fi; \
-	weaver registry check \
+	bash -c "$$RUN_WEAVER" run-weaver validate-registry registry check \
 	  -r $(MODEL) \
 	  --v2 \
 	  --policy "$(POLICY_REPO_URL)@$(POLICY_REPO_REF)[policies/check]" \
@@ -156,37 +167,17 @@ test: test-templates test-policies test-validations
 # into the docs) shows up as a diff. Run `make update-golden` to update them when a deliberate
 # change is made.
 #
-# A fixture import that matches nothing leaves the provenance filters untested, and weaver only
-# warns about it. Weaver wraps its text warnings to the terminal width, so this test reads the
-# typed JSON diagnostics instead, and prints their text for humans.
+# A fixture import that matches nothing leaves the provenance filters untested, so it fails this
+# test (see RUN_WEAVER): update the imports under the fixture to match what the pinned dependency
+# exports.
 test-templates: require-weaver require-jq
-	@mkdir -p .build
 	@rm -rf .build/test-docs
-	@set -e; \
-	status=0; \
-	weaver registry generate \
+	@bash -c "$$RUN_WEAVER" run-weaver test-templates registry generate \
 	  -r $(FIXTURE) \
 	  --v2 \
 	  --templates templates \
-	  --diagnostic-format json \
-	  --diagnostic-stdout=true \
 	  markdown \
-	  .build/test-docs > .build/test-templates.json || status=$$?; \
-	if ! jq -e 'type == "array"' .build/test-templates.json > /dev/null 2>&1; then \
-	  if [[ $$status -ne 0 ]]; then exit $$status; fi; \
-	  echo "error: weaver's diagnostics in .build/test-templates.json are not a JSON array." >&2; \
-	  exit 1; \
-	fi; \
-	jq -r '.[] | .diagnostic.ansi_message // empty' .build/test-templates.json >&2; \
-	if [[ $$status -ne 0 ]]; then exit $$status; fi; \
-	unmatched="$$(jq -r "$$UNMATCHED_IMPORTS" .build/test-templates.json)"; \
-	if [[ -n "$$unmatched" ]]; then \
-	  echo "error: fixture imports match nothing in any dependency:" >&2; \
-	  echo "$$unmatched" >&2; \
-	  echo "The provenance filters are no longer exercised. Update the imports under" >&2; \
-	  echo "$(FIXTURE)/ to match what the pinned dependency exports." >&2; \
-	  exit 1; \
-	fi
+	  .build/test-docs
 	@if ! git --no-pager diff --no-index --exit-code templates_test/golden .build/test-docs; then \
 	  echo "" >&2; \
 	  echo "error: generated docs do not match the golden files." >&2; \
@@ -363,7 +354,55 @@ END { if (best != "") print best }
 endef
 export LATEST_RELEASE_TAG
 
-# jq program for test-templates: one line per import that matched nothing, from weaver's JSON
+# Shell program that runs weaver: `bash -c "$$RUN_WEAVER" run-weaver <name> <weaver arguments>`.
+# It asks weaver for JSON diagnostics, keeps them in .build/<name>.json, prints them unwrapped
+# (weaver wraps its text output to the terminal width, which splits the messages
+# test-validations looks for), and fails when weaver does or when any import matches nothing.
+# Weaver only warns about the latter, and an import that matches nothing silently drops what the
+# registry meant to include.
+define RUN_WEAVER
+set -e
+name="$$1"
+shift
+mkdir -p .build
+out=".build/$$name.json"
+status=0
+weaver "$$@" --diagnostic-format json --diagnostic-stdout=true > "$$out" || status=$$?
+if ! jq -e 'type == "array"' "$$out" > /dev/null 2>&1; then
+  if [[ $$status -ne 0 ]]; then exit $$status; fi
+  echo "error: weaver's diagnostics in $$out are not a JSON array." >&2
+  exit 1
+fi
+jq -r "$$PRINT_DIAGNOSTICS" "$$out" >&2
+if [[ $$status -ne 0 ]]; then exit $$status; fi
+unmatched="$$(jq -r "$$UNMATCHED_IMPORTS" "$$out")"
+if [[ -n "$$unmatched" ]]; then
+  echo "error: imports that match nothing in any dependency:" >&2
+  echo "$$unmatched" >&2
+  echo "Each import must match something a direct dependency exports." >&2
+  exit 1
+fi
+endef
+export RUN_WEAVER
+
+# jq program for RUN_WEAVER: one line per diagnostic, with the "definition/2 is not yet stable"
+# warning weaver emits for every such file, the dependencies' included, collapsed to one line.
+define PRINT_DIAGNOSTICS
+def unstable: [.error | objects | .FailToResolveDefinition? | objects | .UnstableFileFormat?
+  | select(. != null)] | length > 0;
+([.[] | select(unstable)] | length) as $$unstable
+| [.[] | select(unstable | not) | .diagnostic | objects
+    | "\(.severity // "Error"): \(.message)"
+      + (if .help then "\n  help: \(.help)" else "" end)]
+  + (if $$unstable > 0
+     then ["Warning: \($$unstable) definition files, the dependencies' included, use file_format "
+           + "definition/2, which weaver still reports as not yet stable."]
+     else [] end)
+| .[]
+endef
+export PRINT_DIAGNOSTICS
+
+# jq program for RUN_WEAVER: one line per import that matched nothing, from weaver's JSON
 # diagnostics.
 define UNMATCHED_IMPORTS
 .[] | .error | objects | .UnmatchedImport // empty | "  \(.signal): \(.pattern)"

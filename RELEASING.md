@@ -34,7 +34,7 @@ gh release download v<previous-version> -p resolved.yaml -O - | diff - .build/pa
    - Tag: type `v<version>` matching the bumped `schema_url` (e.g. `v0.3.0`) into the tag
      selector, click `Create a new tag`, and confirm in the pop-up that the tag should be created
      on publish. This doesn't create the tag yet, which is what the workflow expects: it is
-     created when the workflow publishes the release in step #3. The tag selector now shows the
+     created when the workflow publishes the release in step #4. The tag selector now shows the
      new tag and `Previous tag` shows `Auto`.
    - Description: click `Generate release notes` (enabled only once the tag is set) to pre-fill
      the input with a list of PRs merged since the last release. Remove PRs that don't actually
@@ -49,13 +49,19 @@ gh release download v<previous-version> -p resolved.yaml -O - | diff - .build/pa
      ```bash
      gh api repos/embrace-io/embrace-semconv/releases --jq '.[] | select(.draft) | .tag_name'
      ```
-3. Run the [`Release` workflow](https://github.com/embrace-io/embrace-semconv/actions/workflows/release.yml)
-   from the Actions tab (`workflow_dispatch`). It will:
+3. Check that the `CI validation` workflow passed on the commit you're releasing (`main`'s head):
+   the Release workflow re-runs only `make validate-registry`, not the tests or the docs
+   comparison. `gh run list --workflow "CI validation" --commit <sha>` shows it, given the full
+   40-character sha (`git rev-parse origin/main`): a short one matches nothing, silently.
+4. Run the [`Release` workflow](https://github.com/embrace-io/embrace-semconv/actions/workflows/release.yml)
+   from the Actions tab (`workflow_dispatch`), with `main` under `Use workflow from`. It will:
+   - Refuse to run on any other branch.
    - Derive the tag from the manifest. The release will fail if the git tag already exists, or if
      no matching draft is waiting. The latter should be created in step #2.
    - Validate the registry (i.e. running `make validate-registry`): its dependencies, schema, and
      the shared and local policies, including backwards compatibility with the last release.
-   - Package the publication artifacts (i.e. running `make package`).
+   - Package the publication artifacts (i.e. running `make package`), and refuse to publish a
+     manifest whose `resolved_registry_uri` isn't exactly this release's `resolved.yaml`.
    - Attach `manifest.yaml` and `resolved.yaml` to the draft and publish it, creating the
      `v<version>` tag at the workflow's commit.
 
