@@ -60,8 +60,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" >/dev/null 2>&1; then
+          # Only a confirmed "Not Found" means the tag is new. Any other failure is not an
+          # answer, so the release stops rather than risk publishing over an existing tag.
+          if response=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" 2>&1); then
             echo "::error::Tag '${TAG}' already exists. Tags are immutable; bump the version segment of schema_url in model/manifest.yaml and merge that first."
+            exit 1
+          fi
+          if [[ "$response" != *"(HTTP 404)"* ]]; then
+            echo "::error::Could not check whether tag '${TAG}' exists:"
+            echo "$response"
             exit 1
           fi
           echo "Tag '${TAG}' is new."
@@ -71,8 +78,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          info=$(gh release view "$TAG" --json isDraft 2>/dev/null || true)
-          if [ -z "$info" ]; then
+          # "release not found" means there is no draft. Any other failure is not enough
+          # proof that there is no such release, so we don't proceed.
+          if ! is_draft=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>"${RUNNER_TEMP}/release-view.log"); then
+            if ! grep -qx "release not found" "${RUNNER_TEMP}/release-view.log"; then
+              echo "::error::Could not look up the release '${TAG}':"
+              cat "${RUNNER_TEMP}/release-view.log"
+              exit 1
+            fi
             # List drafts by title too: a draft saved without a tag has an empty tagName, and is
             # otherwise indistinguishable from no draft at all.
             existing_drafts=$(gh release list --limit 20 --json name,tagName,isDraft \
@@ -88,7 +101,6 @@ jobs:
             fi
             exit 1
           fi
-          is_draft=$(echo "$info" | jq -r .isDraft)
           if [ "$is_draft" != "true" ]; then
             echo "::error::Release '${TAG}' is already published; refusing to re-release."
             exit 1

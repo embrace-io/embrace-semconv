@@ -115,7 +115,7 @@ them as `events:` blocks that `ref` attributes, the same way groups do.
 
 Weaver and OPA are pinned in `versions.env`; install them with `make install-weaver` /
 `make install-opa`, or ensure the pinned versions are on `PATH` (the Makefile warns on a mismatch).
-The tests also need `jq`.
+The make targets also need `jq`.
 
 - **`make validate-registry`** — validates the registry: the resolved dependency trees
   (`make validate-dependencies`), then the schema, then the shared + local policies, including

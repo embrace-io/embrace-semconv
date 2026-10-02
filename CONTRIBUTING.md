@@ -25,5 +25,5 @@ make generate-all        # regenerate docs/ and commit the result
 make test                # template and validation regression tests + rego policy unit tests
 ```
 
-These match the CI jobs in `.github/workflows/ci-validation.yaml`. The tests also need
-[jq](https://jqlang.org/download/) on `PATH`.
+These match the CI jobs in `.github/workflows/ci-validation.yaml`. The make targets
+also need [jq](https://jqlang.org/download/) on `PATH`.

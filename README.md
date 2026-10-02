@@ -71,8 +71,8 @@ keep the core registry's version in `model/manifest.yaml` in lockstep with it.
 are not available via package managers like Homebrew at the pinned versions, but `make
 install-weaver` and `make install-opa` download the release binaries pinned in
 [`versions.env`](versions.env) and install them to `~/.local/bin`. Renovate opens pull requests
-that bump these pins; after one merges, rerun the target to install the new version. The tests
-also need [jq](https://jqlang.org/download/) on `PATH`.
+that bump these pins; after one merges, rerun the target to install the new version. The make
+targets also need [jq](https://jqlang.org/download/) on `PATH`.
 
 ```bash
 make validate-registry   # validate the registry: dependencies + schema + shared and local policies
