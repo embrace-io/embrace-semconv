@@ -1,0 +1,1 @@
+opentelemetry.io/schemas is in the dependency tree at more than one version

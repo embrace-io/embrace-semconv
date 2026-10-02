@@ -1,0 +1,17 @@
+file_format: definition/2
+
+# Valid: the attribute has a namespace, and the group exports it.
+attribute_groups:
+  - id: registry.validations_test
+    visibility: public
+    stability: development
+    brief: Group that exports the attribute.
+    attributes:
+      - ref: validations_test.renamed
+
+attributes:
+  - key: validations_test.renamed
+    type: string
+    stability: development
+    brief: Attribute that replaced one without a namespace.
+    examples: ["x"]

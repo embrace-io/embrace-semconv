@@ -1,0 +1,41 @@
+{
+  "tests": {
+    "t1": {
+      "what": "a published registry updates itself to the layout",
+      "repo": "embrace-io/embrace-semconv", "base": "916dcb0",
+      "branch": "t1-self-update", "worktree": "t1-embrace-semconv"
+    },
+    "t2a": {
+      "what": "a new published, private registry with attributes and events",
+      "new_repo": true, "worktree": "t2a-acme-mobile"
+    },
+    "t2b": {
+      "what": "a new stable, unpublished, metrics-only registry with docs",
+      "new_repo": true, "worktree": "t2b-acme-metrics"
+    },
+    "t2c": {
+      "what": "push T2a's output to the private test repo, watch CI, release v0.1.0-dev",
+      "after": "t2a", "github_repo": true
+    },
+    "t3": {
+      "what": "update a -dev family registry whose origin is a fork",
+      "repo": "open-telemetry/semantic-conventions-client-side", "base": "51a95a8",
+      "branch": "t3-client-side", "worktree": "t3-client-side"
+    },
+    "t4": {
+      "what": "TypeScript codegen from a published registry in an npm-workspaces monorepo",
+      "repo": "embrace-io/embrace-web-sdk", "base": "9d76f23c",
+      "branch": "t4-web-sdk", "worktree": "t4-embrace-web-sdk"
+    },
+    "t5": {
+      "what": "v1 to definition/2 migration with build-time Gradle codegen, byte-identical",
+      "repo": "open-telemetry/opentelemetry-android", "base": "2e13ac98",
+      "branch": "t5-otel-android", "worktree": "t5-opentelemetry-android"
+    },
+    "t6": {
+      "what": "a subdirectory registry with committed Kotlin consumes a federated registry",
+      "repo": "embrace-io/embrace-android-sdk", "base": "5add5c235",
+      "branch": "t6-android-semconv", "worktree": "t6-embrace-android-sdk"
+    }
+  }
+}

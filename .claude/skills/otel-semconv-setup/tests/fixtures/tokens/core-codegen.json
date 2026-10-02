@@ -1,0 +1,14 @@
+{
+  "CORE_VERSION": "1.44.0",
+  "CORE_OLDER_VERSION": "1.43.0",
+  "PROJECT_DIR": ".",
+  "CI_WORKFLOW_NAME": "CI validation",
+  "CI_GATE_JOB": "required-status-check",
+  "ALL_PREREQUISITES": "validate-generated",
+  "TEMPLATE_TARGETS": "$(CODEGEN_TARGET)",
+  "LANGUAGE": "Python",
+  "SOURCE_REGISTRY": "https://github.com/open-telemetry/semantic-conventions@v1.44.0[model]",
+  "CODEGEN_TARGET": "python",
+  "GENERATED_DIR": "semconv_attributes",
+  "GENERATED_REPO_PATH": "semconv_attributes"
+}

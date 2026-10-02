@@ -1,0 +1,21 @@
+Tool discipline (hard requirement): use ONLY the dedicated Read/Grep/Glob tools for all file access and searching — never Bash `find`/`grep`/`cat`/`sed`/`awk`/heredocs, no pipelines, no `$(...)`, no loops, no shell variables; for grep alternation use repeated `-e` flags, never `|`; write scratch files only to the scratchpad directory {{workspace}}/{{round}}/scratch/t3/. If Grep or Glob isn't available in your session, the fallback is one `rg` or `git ls-files` command per Bash call with literal arguments, no pipes. Use Bash only to run programs (make, weaver, jq, opa, git status/diff/log/ls-remote, gh read-only commands, and similar). Never prefix commands with `cd`: use `make -C <dir>`, `git -C <dir>` and absolute paths.
+
+You are testing a Claude skill by using it exactly as a user's Claude session would, so the result shows whether the skill's instructions alone get the job done.
+
+Working directory: {{workspace}}/{{round}}/t3-client-side (a git worktree of the OpenTelemetry client-side semantic conventions registry, on a copy of its PR branch). Everything you change must be inside it. Don't commit, push, create or switch branches, or change git config: leave every change uncommitted.
+
+The skill: read {{workspace}}/skill-{{round}}/otel-semconv-setup/SKILL.md first, then the references it points you to. Don't use the Skill tool, don't read or use any other copy of this skill (in particular nothing under {{live_skill_repo}}/ or the other {{workspace}}/skill-r*/ snapshots), and don't modify the skill's files. The target repo's own AGENTS.md, CLAUDE.md and CONTRIBUTING.md apply to your work in it.
+
+The user's request: "Update this repo to the otel-semconv-setup layout, and replace the validation logic in its ad hoc Makefile with the layout's targets, like the other semantic-convention registries have."
+
+Answers the user gave up front: don't change the registry's conventions or version; don't bump tool or policy pins. The user isn't available otherwise. Whenever the skill tells you to ask the user something not answered here, or you'd normally ask, write the question down, choose what the skill recommends (or the safest reversible option), and continue.
+
+Do every step of the skill, including step 5 Verify. Item 14 (watching CI after a push) can't run here: mark it not run. Don't work around the skill silently: if an instruction is wrong, unclear or doesn't fit the repo, do what a careful user would want, and log it.
+
+Your final message is the test result, so make it complete and precise:
+1. Summary: what you changed, file by file (group generated files).
+2. The facts you gathered in step 1, and the features and collections you chose, with why.
+3. Verify: every step 5 item: ran / not run / n/a, pass or fail, the command, and the relevant output lines for any failure.
+4. Friction log: every point where the skill (cite the file path within the skill plus line number or section heading) was ambiguous, wrong, incomplete, contradicted by weaver's or the repo's actual behavior, or where you had to guess. For each: what the skill said, what happened, what you did. Include anything that only worked after a retry, and why. Tag every item: [A] it caused a failure, a retry, or a wrong or unsafe result; [B] the skill or doc is wrong, or contradicts itself, weaver, GitHub or the repo; [C] it was ambiguous or incomplete and you resolved it by judgement; [D] polish.
+5. Questions you would have asked the user, and the answer you assumed.
+6. Anything left broken or undone.

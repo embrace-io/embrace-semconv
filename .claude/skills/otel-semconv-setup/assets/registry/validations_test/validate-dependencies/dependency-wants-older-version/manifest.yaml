@@ -1,0 +1,12 @@
+# Depends on the core registry at version @@CORE_VERSION@@ directly, and through older-core at
+# version @@CORE_OLDER_VERSION@@. Weaver uses @@CORE_VERSION@@ without a warning, so older-core
+# runs against a core registry version it was never validated with.
+
+schema_url: https://example.com/schemas/validations-test-case/0.0.0-dev
+description: Case where a dependency requests an older version of a registry than this one.
+stability: development
+dependencies:
+  - schema_url: https://example.com/schemas/validations-test-older-core/0.0.0-dev
+    registry_path: validations_test/registries/older-core
+  - schema_url: https://opentelemetry.io/schemas/@@CORE_VERSION@@
+    registry_path: https://github.com/open-telemetry/semantic-conventions@v@@CORE_VERSION@@[model]

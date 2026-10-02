@@ -1,0 +1,34 @@
+{
+  "_comment": "The kinds of values the layout's templates and reference/templates.md were written for, as weaver's materialized-registry-v2 JSON schema states them. tests/template_types.py fails when the schema differs: check every template that branches on the changed field, and the guidance in templates.md, before updating this file.",
+  "attribute_types": [
+    "any", "boolean", "boolean[]", "double", "double[]", "enum", "int", "int[]", "string",
+    "string[]", "template[any]", "template[boolean]", "template[boolean[]]", "template[double]",
+    "template[double[]]", "template[int]", "template[int[]]", "template[string]",
+    "template[string[]]"
+  ],
+  "enum_member_value_types": ["boolean", "integer", "number", "string"],
+  "requirement_levels": ["conditionally_required", "opt_in", "recommended", "required"],
+  "signal_requirement_levels": ["opt_in", "recommended"],
+  "example_shapes": [
+    "array of array of boolean", "array of array of integer", "array of array of number",
+    "array of array of string", "array of boolean", "array of integer", "array of number",
+    "array of string", "array of ValueSpec", "boolean", "integer", "number", "string", "ValueSpec"
+  ],
+  "required_fields": [
+    "Attribute.brief", "Attribute.key", "Attribute.stability", "Attribute.type",
+    "AttributeGroup.attributes", "AttributeGroup.brief", "AttributeGroup.id",
+    "AttributeGroup.stability", "AttributeGroupAttribute.brief", "AttributeGroupAttribute.key",
+    "AttributeGroupAttribute.requirement_level", "AttributeGroupAttribute.stability",
+    "AttributeGroupAttribute.type", "Entity.brief", "Entity.stability", "Entity.type",
+    "EntityAttribute.brief", "EntityAttribute.key", "EntityAttribute.requirement_level",
+    "EntityAttribute.stability", "EntityAttribute.type", "EnumEntriesSpec.id", "Event.brief",
+    "Event.name", "Event.stability", "EventAttribute.brief", "EventAttribute.key",
+    "EventAttribute.requirement_level", "EventAttribute.stability", "EventAttribute.type",
+    "Metric.brief", "Metric.instrument", "Metric.name", "Metric.stability", "Metric.unit",
+    "MetricAttribute.brief", "MetricAttribute.key", "MetricAttribute.requirement_level",
+    "MetricAttribute.stability", "MetricAttribute.type", "Span.brief", "Span.kind", "Span.name",
+    "Span.stability", "Span.type", "SpanAttribute.brief", "SpanAttribute.key",
+    "SpanAttribute.requirement_level", "SpanAttribute.stability", "SpanAttribute.type",
+    "SpanName.note"
+  ]
+}

@@ -1,0 +1,10 @@
+# Names the core registry with a mistyped path. Weaver treats `opentelemetry.io/cool-schemas` as a
+# registry unrelated to the `opentelemetry.io/schemas` it fetches, so version conflicts with the
+# core registry elsewhere in the tree would go unnoticed.
+
+schema_url: https://example.com/schemas/validations-test-case/0.0.0-dev
+description: Case where a dependency's schema_url names a different registry than it fetches.
+stability: development
+dependencies:
+  - schema_url: https://opentelemetry.io/cool-schemas/@@CORE_VERSION@@
+    registry_path: https://github.com/open-telemetry/semantic-conventions@v@@CORE_VERSION@@[model]

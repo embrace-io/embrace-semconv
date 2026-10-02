@@ -1,0 +1,8 @@
+templates:
+  - pattern: attributes.py.j2
+    # One module per public attribute group this registry defines or imports.
+    filter: >
+      (.registry.attribute_groups // [])
+      | map(select(.attributes | length > 0))
+    application_mode: each
+    file_name: "{{ ctx.id | split('.') | last | snake_case }}_attributes.py"

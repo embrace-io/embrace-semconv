@@ -1,0 +1,7 @@
+[
+  {
+    "id": "naming_convention_attr_has_namespace",
+    "context": {"attribute": "renamed"},
+    "reason": "Fixed since: the attribute is now validations_test.renamed."
+  }
+]

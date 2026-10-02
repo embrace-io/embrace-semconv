@@ -1,0 +1,19 @@
+file_format: definition/2
+
+# A fixture metric, so the metric templates have something to render. It references a core registry
+# attribute, so it doesn't depend on the fixture defining attributes of its own. Metrics imported
+# from the core registry give the templates' provenance filters something to filter out.
+metrics:
+  - name: fixture.metric
+    instrument: counter
+    unit: "1"
+    requirement_level: recommended
+    stability: development
+    brief: A fixture metric.
+    attributes:
+      - ref: session.id
+        requirement_level: recommended
+
+imports:
+  metrics:
+    - "hw.*"

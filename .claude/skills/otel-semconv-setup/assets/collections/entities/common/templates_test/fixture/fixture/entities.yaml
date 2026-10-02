@@ -1,0 +1,11 @@
+file_format: definition/2
+
+# A fixture entity, so the entity templates have something to render. Its identity is a core
+# registry attribute, so it doesn't depend on the fixture defining attributes of its own.
+entities:
+  - type: fixture.entity
+    requirement_level: recommended
+    stability: development
+    brief: A fixture entity.
+    identity:
+      - ref: session.id

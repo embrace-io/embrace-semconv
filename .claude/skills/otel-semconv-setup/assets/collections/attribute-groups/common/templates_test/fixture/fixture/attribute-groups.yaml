@@ -1,0 +1,24 @@
+file_format: definition/2
+
+# Fixture attribute groups, so the group templates have something to render: a public group, and an
+# internal one it includes, which weaver folds into the public group. They reference the core
+# registry's attributes, so they don't depend on the fixture defining attributes of its own. The
+# imported core registry group is never listed among the registry's attribute groups (weaver adds
+# its attributes to the registry's attributes instead), so group templates see only the fixture's.
+attribute_groups:
+  - id: registry.fixture
+    visibility: public
+    stability: development
+    brief: >
+      Fixture attribute group.
+    attributes:
+      - ref: session.id
+      - ref_group: registry.fixture_internal
+  - id: registry.fixture_internal
+    visibility: internal
+    attributes:
+      - ref: session.previous_id
+
+imports:
+  attribute_groups:
+    - "registry.session"

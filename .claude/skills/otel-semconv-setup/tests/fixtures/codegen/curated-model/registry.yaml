@@ -1,0 +1,13 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: registry.acme_sdk.session
+    visibility: public
+    stability: development
+    brief: Session attributes the Acme SDK records.
+    attributes:
+      - ref: session.id
+
+imports:
+  attribute_groups:
+    - "registry.embrace.emb"

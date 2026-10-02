@@ -1,0 +1,7 @@
+# Two attributes without a namespace, only one of them listed in known-violations.json. The
+# listed violation is accepted and the other must still fail, so a known-violations list can't
+# hide more than it names.
+
+schema_url: https://example.com/schemas/validations-test-case/0.0.0-dev
+description: Case where only one of two shared-pack violations is a known violation.
+stability: development

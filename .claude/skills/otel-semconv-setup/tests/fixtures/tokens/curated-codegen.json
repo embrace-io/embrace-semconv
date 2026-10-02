@@ -1,0 +1,19 @@
+{
+  "SCHEMA_URL": "https://example.com/schemas/acme-sdk/0.1.0-dev",
+  "REGISTRY_STABILITY": "development",
+  "REGISTRY_DESCRIPTION": "Conventions the Acme SDK records.",
+  "POLICY_PACKAGE": "com.example.schemas.acme_sdk",
+  "CORE_VERSION": "1.44.0",
+  "CORE_OLDER_VERSION": "1.43.0",
+  "PROJECT_DIR": ".",
+  "BASELINE": "",
+  "CI_WORKFLOW_NAME": "CI validation",
+  "CI_GATE_JOB": "required-status-check",
+  "ALL_PREREQUISITES": "validate-registry validate-generated",
+  "TEMPLATE_TARGETS": "$(CODEGEN_TARGET)",
+  "LANGUAGE": "Python",
+  "SOURCE_REGISTRY": "$(MODEL)",
+  "CODEGEN_TARGET": "python",
+  "GENERATED_DIR": "semconv_attributes",
+  "GENERATED_REPO_PATH": "semconv_attributes"
+}

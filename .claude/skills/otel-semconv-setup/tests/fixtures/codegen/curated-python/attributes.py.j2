@@ -1,0 +1,6 @@
+{# attributes.py.j2: the trailing dash stops this comment leaving a blank first line -#}
+"""Attribute keys from {{ ctx.id }}. Generated; do not edit."""
+{% for attribute in ctx.attributes | sort(attribute="key") %}
+{{ attribute.key | screaming_snake_case }} = "{{ attribute.key }}"
+"""{{ attribute.brief | trim | replace('\\', '\\\\') | replace('"', '\\"') }}"""
+{% endfor %}

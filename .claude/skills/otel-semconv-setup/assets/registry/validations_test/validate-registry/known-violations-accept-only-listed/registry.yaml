@@ -1,0 +1,24 @@
+file_format: definition/2
+
+# The group exports both attributes, so a project's local policy on exports (with the attributes
+# collection) has nothing to reject.
+attribute_groups:
+  - id: registry.validations_test
+    visibility: public
+    stability: development
+    brief: Group that exports both attributes.
+    attributes:
+      - ref: listed
+      - ref: unlisted
+
+attributes:
+  - key: listed
+    type: string
+    stability: development
+    brief: Attribute without a namespace, listed as a known violation.
+    examples: ["x"]
+  - key: unlisted
+    type: string
+    stability: development
+    brief: Attribute without a namespace, not listed.
+    examples: ["x"]

@@ -1,0 +1,87 @@
+[
+  {
+    "id": "stable-signal-opt-in",
+    "rule": "A stable signal references a less stable attribute only at opt_in.",
+    "pattern": "less stable attribute",
+    "files": ["reference/versioning.md", "SKILL.md", "assets/project/registry/README.md",
+              "assets/project/registry/AGENTS.md", "assets/project/registry/CONTRIBUTING.md"]
+  },
+  {
+    "id": "dev-family-no-baseline",
+    "rule": "A -dev family leaves BASELINE empty.",
+    "pattern": "family never has a baseline|set its `BASELINE` empty|a `-dev` family included\\) empty",
+    "files": ["reference/versioning.md", "SKILL.md", "reference/layout.md"]
+  },
+  {
+    "id": "layout-file-content",
+    "rule": "A layout file the repo already has takes the layout's content, keeping the repo's pins, additions and formatting rules; prose files are merged.",
+    "pattern": "takes? the layout's content",
+    "files": ["SKILL.md", "reference/layout.md", "reference/upgrading.md"]
+  },
+  {
+    "id": "copy-file-by-file",
+    "rule": "In an update or a subdirectory project, copy file by file, except a directory holding only layout files.",
+    "pattern": "copy file by file",
+    "files": ["reference/layout.md", "SKILL.md"]
+  },
+  {
+    "id": "repo-formatting-rules",
+    "rule": "The repo's formatting rules for the file types it formats stay the repo's.",
+    "pattern": "formatting rules",
+    "files": ["SKILL.md", "reference/layout.md"]
+  },
+  {
+    "id": "never-add-collection",
+    "rule": "Never add a collection nobody asked for (apart from attribute-groups with attributes).",
+    "pattern": "never add a collection",
+    "files": ["SKILL.md"]
+  },
+  {
+    "id": "full-sha",
+    "rule": "gh run list --commit needs the full 40-character sha; a short one matches nothing.",
+    "pattern": "40-character",
+    "files": ["assets/release/RELEASING.md"]
+  },
+  {
+    "id": "dev-engines",
+    "rule": "Engine-enforcing package managers can refuse npm run/npx/npm exec; call binaries from node_modules/.bin.",
+    "pattern": "devEngines",
+    "files": ["reference/templates.md", "SKILL.md"]
+  },
+  {
+    "id": "renovate-validator-version",
+    "rule": "A repo's own Renovate validator asking for an unversioned renovate gets an old release on a Node newer than the latest supports: make it use versions.env's RENOVATE_VERSION; fileMatch only for a validator pinned old on purpose.",
+    "pattern": "unversioned `renovate`",
+    "files": ["reference/layout.md", "assets/renovate/.github/renovate.json5"]
+  },
+  {
+    "id": "zizmor-self-repository",
+    "rule": "The layout's workflows use $/ for local actions: zizmor reports ./ as self-repository.",
+    "pattern": "self-repository",
+    "files": ["reference/layout.md"]
+  },
+  {
+    "id": "reread-after-cp",
+    "rule": "Read every copied file before editing it, whether cp created it or replaced one you had read.",
+    "pattern": "read every copied file before editing it",
+    "files": ["reference/layout.md"]
+  },
+  {
+    "id": "package-before-snapshot",
+    "rule": "In an update with release, copy make package's output before touching anything (the inventory step), not in Verify.",
+    "pattern": "copy `\\.build/package`",
+    "files": ["reference/upgrading.md"]
+  },
+  {
+    "id": "new-convention-stability",
+    "rule": "New conventions' default stability is the repo's or the user's, else development, whatever the registry's stability; the doc skeletons fill it in.",
+    "pattern": "default stability for new conventions",
+    "files": ["SKILL.md"]
+  },
+  {
+    "id": "consumer-codegen-only",
+    "rule": "Code generated from one existing registry, all of it or some keys, is a consumer: codegen alone, no registry of its own.",
+    "pattern": "is a consumer",
+    "files": ["SKILL.md"]
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "id": "naming_convention_attr_has_namespace",
+    "context": {"attribute": "listed"},
+    "reason": "The case's one accepted violation."
+  }
+]

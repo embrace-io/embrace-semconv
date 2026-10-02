@@ -1,0 +1,193 @@
+name: Release
+
+# Publishes a draft release that a maintainer has already prepared, attaching the
+# OTEP 4815 publication artifacts. See RELEASING.md.
+#
+# The draft represents a maintainer's intent to create a new release. The
+# workflow won't create one if it was accidentally invoked without the draft being
+# already present. The version is never passed in either: it is read from
+# the schema_url in the registry's manifest.yaml (`make print-version`), which is the
+# single source of truth for this registry's identity and version. It releases only
+# from the default branch.
+
+on:
+  workflow_dispatch:
+
+# Only one release may be in flight at a time. Don't allow cancellation, which
+# could lead to broken/abandoned artifacts.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+# The directory holding the project's Makefile, relative to the repo root.
+defaults:
+  run:
+    working-directory: @@PROJECT_DIR@@
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write  # to attach the artifacts to the draft, create the tag, and publish it
+    steps:
+      # The tag is created at the commit the workflow runs on, so only the default branch may
+      # release. Runs before checkout, so the project directory doesn't exist yet.
+      - name: Refuse a branch other than the default branch
+        working-directory: .
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [ "$REF_NAME" != "$DEFAULT_BRANCH" ]; then
+            echo "::error::Releases are made from '${DEFAULT_BRANCH}', but this run is on '${REF_NAME}'. Pick '${DEFAULT_BRANCH}' under 'Use workflow from'."
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compute the tag from the registry's manifest
+        id: tag
+        run: |
+          if ! version=$(make --no-print-directory -s print-version); then
+            echo "::error::Could not read a version this registry may publish from the schema_url in its manifest.yaml (see the error above)."
+            exit 1
+          fi
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+          echo "Tag: v${version}"
+
+      - name: Refuse if the git tag already exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          # Only a confirmed "Not Found" means the tag is new. Any other failure is not an
+          # answer, so the release stops rather than risk publishing over an existing tag.
+          if response=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" 2>&1); then
+            echo "::error::Tag '${TAG}' already exists. Tags are immutable; bump the version segment of the registry's schema_url and merge that first."
+            exit 1
+          fi
+          if [[ "$response" != *"(HTTP 404)"* ]]; then
+            echo "::error::Could not check whether tag '${TAG}' exists:"
+            echo "$response"
+            exit 1
+          fi
+          echo "Tag '${TAG}' is new."
+
+      - name: Find the draft release matching schema_url
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          # "release not found" means there is no draft. Any other failure is not enough
+          # proof that there is no such release, so we don't proceed.
+          if ! is_draft=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>"${RUNNER_TEMP}/release-view.log"); then
+            if ! grep -qx "release not found" "${RUNNER_TEMP}/release-view.log"; then
+              echo "::error::Could not look up the release '${TAG}':"
+              cat "${RUNNER_TEMP}/release-view.log"
+              exit 1
+            fi
+            # List drafts by title too: a draft saved without a tag has an empty tagName, and is
+            # otherwise indistinguishable from no draft at all.
+            existing_drafts=$(gh release list --limit 20 --json name,tagName,isDraft \
+              --jq '.[] | select(.isDraft) | "  \(.name): \(if .tagName == "" then "no tag" else "tag \(.tagName)" end)"')
+            echo "::error::Expected a draft release tagged '${TAG}', derived from the registry's schema_url."
+            if [ -n "$existing_drafts" ]; then
+              echo "Existing drafts:"
+              echo "${existing_drafts}"
+              echo "Edit the draft so its tag is '${TAG}' (in the web UI, type it in the tag selector and click 'Create a new tag'),"
+              echo "or update the registry's schema_url to match the draft's tag."
+            else
+              echo "No draft releases exist. See RELEASING.md."
+            fi
+            exit 1
+          fi
+          if [ "$is_draft" != "true" ]; then
+            echo "::error::Release '${TAG}' is already published; refusing to re-release."
+            exit 1
+          fi
+          echo "Draft release '${TAG}' matches the registry's schema_url."
+
+      - name: Read pinned weaver version
+        id: weaver
+        run: |
+          source versions.env
+          echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
+
+      # `$/` is GitHub's syntax for this repository's own actions, at the commit running.
+      - name: Install Weaver
+        uses: $/.github/actions/setup-weaver
+        with:
+          version: ${{ steps.weaver.outputs.version }}
+
+      # ==== private
+      # A private repo: git asks gh for credentials, and gh answers with GH_TOKEN, which only the
+      # steps that fetch are given. No token is ever written into a URL.
+      - name: Let git use the workflow's token
+        run: gh auth setup-git
+        env:
+          GH_TOKEN: ${{ github.token }}
+      # ==== end private
+
+      # Nothing should be published that would not pass CI. The release runs from a
+      # dispatch, so it is not otherwise guaranteed to sit on a commit CI has seen.
+      - name: Validate the registry (dependencies + schema + policies)
+        # ==== private
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # ==== end private
+        run: make validate-registry
+
+      - name: Package publication artifacts
+        # ==== private
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # ==== end private
+        run: make package
+
+      # The manifest is published as is, so its URI must be exactly this release's resolved.yaml,
+      # with nothing more in it (a token picked up from git's URL rewriting, say).
+      - name: Check the packaged manifest's resolved_registry_uri
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          expected="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/resolved.yaml"
+          actual=$(awk '/^resolved_registry_uri:/ { print $2; exit }' .build/package/manifest.yaml)
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::manifest.yaml's resolved_registry_uri is not ${expected}: refusing to publish it."
+            exit 1
+          fi
+
+      - name: Upload artifacts to the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          gh release upload "$TAG" \
+            .build/package/manifest.yaml \
+            .build/package/resolved.yaml \
+            --clobber
+
+      # A version with a SemVer pre-release suffix (e.g. 0.4.0-dev) is published as a GitHub
+      # prerelease, which /releases/latest skips; any other version is a regular release.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          prerelease=false
+          case "$TAG" in
+            *-*) prerelease=true ;;
+          esac
+          gh release edit "$TAG" \
+            --draft=false \
+            --prerelease="$prerelease" \
+            --target "$TARGET_SHA"
+          echo "Released ${TAG} at ${TARGET_SHA} (prerelease: ${prerelease})"
