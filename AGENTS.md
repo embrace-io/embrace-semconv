@@ -36,8 +36,9 @@ docs/                  # GENERATED markdown — do not hand-edit; regenerate
 Makefile               # validation, docs, tests, packaging (`make help`); CI runs its targets
 versions.env           # pinned weaver + OPA + shared policy pack versions
 .weaver.toml           # deliberately empty: stops weaver picking up one from a parent directory
+scripts/               # install-weaver.sh, behind `make install-weaver` (CI uses weaver's setup-weaver action)
 .github/               # workflows/ (ci-validation.yaml, release.yml),
-                       # actions/ (setup-weaver, setup-opa, assert-no-drift)
+                       # actions/ (setup-opa, assert-no-drift)
 ```
 
 ## Dependencies
