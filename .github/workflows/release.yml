@@ -102,9 +102,10 @@ jobs:
           echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Install Weaver
-        uses: ./.github/actions/setup-weaver
+        uses: open-telemetry/weaver/.github/actions/setup-weaver@38befce4bc68fe320d20f189465c93835ac20c12 # v0.26.1
         with:
           version: ${{ steps.weaver.outputs.version }}
+          cache: false
 
       # Nothing should be published that would not pass CI. The release runs from a
       # dispatch, so it is not otherwise guaranteed to sit on a commit CI has seen.
