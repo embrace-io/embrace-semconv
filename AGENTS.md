@@ -34,11 +34,11 @@ policies_test/         # OPA unit tests for policies/
 validations_test/      # invalid registries validation must fail on: <make target>/<case>/
 docs/                  # GENERATED markdown — do not hand-edit; regenerate
 Makefile               # validation, docs, tests, packaging (`make help`); CI runs its targets
-versions.env           # pinned weaver + OPA + shared policy pack versions
+versions.env           # pinned weaver + OPA + shared policy pack versions (Renovate bumps them)
 .weaver.toml           # deliberately empty: stops weaver picking up one from a parent directory
 scripts/               # install-weaver.sh, behind `make install-weaver` (CI uses weaver's setup-weaver action)
 .github/               # workflows/ (ci-validation.yaml, release.yml),
-                       # actions/ (setup-opa, assert-no-drift)
+                       # actions/ (setup-opa, assert-no-drift), renovate.json5
 ```
 
 ## Dependencies
@@ -48,7 +48,8 @@ scripts/               # install-weaver.sh, behind `make install-weaver` (CI use
   two must change together — weaver never fails when they disagree (at most it warns), so
   `make validate-dependencies` (run by `make validate-registry`) fails unless each `schema_url`
   matches the manifest of the registry its `registry_path` fetches.
-- **The core registry** is pinned to a release tag in `model/manifest.yaml`.
+- **The core registry** is pinned to a release tag in `model/manifest.yaml`. Renovate bumps it
+  there and in the template fixture's manifest in one pull request.
 - Weaver resolves **one** version per registry for the whole dependency graph (the highest), and
   warns only when it drops a version the root requested. `make validate-dependencies` fails
   whenever the graph requests a registry at more than one version, so when a dependency that itself

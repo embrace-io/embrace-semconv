@@ -4,5 +4,6 @@ schema_url: https://embrace.io/schemas/embrace/0.3.0
 description: Federated semantic conventions for the Embrace SDK.
 stability: stable
 dependencies:
+  # renovate: datasource=github-releases depName=open-telemetry/semantic-conventions versioning=semver-coerced
   - schema_url: https://opentelemetry.io/schemas/1.44.0
     registry_path: https://github.com/open-telemetry/semantic-conventions@v1.44.0[model]

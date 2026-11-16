@@ -70,9 +70,9 @@ keep the core registry's version in `model/manifest.yaml` in lockstep with it.
 [Weaver](https://github.com/open-telemetry/weaver) and [OPA](https://www.openpolicyagent.org/)
 are not available via package managers like Homebrew at the pinned versions, but `make
 install-weaver` and `make install-opa` download the release binaries pinned in
-[`versions.env`](versions.env) and install them to `~/.local/bin`. To update either, change its
-version in `versions.env` and rerun the target. The tests also need
-[jq](https://jqlang.org/download/) on `PATH`.
+[`versions.env`](versions.env) and install them to `~/.local/bin`. Renovate opens pull requests
+that bump these pins; after one merges, rerun the target to install the new version. The tests
+also need [jq](https://jqlang.org/download/) on `PATH`.
 
 ```bash
 make validate-registry   # validate the registry: dependencies + schema + shared and local policies
