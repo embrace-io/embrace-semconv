@@ -1,0 +1,22 @@
+{
+  "gh auth setup-git": {
+    "status": "verified",
+    "how": "In a private repo's CI, with GH_TOKEN on the step: git ls-remote on the repo succeeds and the job passes"
+  },
+  "make package": {
+    "status": "reference",
+    "how": "the release part's target, named in the README skeleton's release block"
+  },
+  "weaver registry check": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "weaver registry generate": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "weaver registry generate -r '@@REPO_URL@@@<version>[model]' --v2 --templates <your-templates-dir> <your-target> <your-output-dir>": {
+    "status": "verified",
+    "how": "With weaver 0.28.0, a published registry's repo and tag, and a templates directory with a markdown target: generates its docs"
+  }
+}
