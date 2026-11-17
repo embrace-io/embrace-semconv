@@ -1,0 +1,8 @@
+{
+  "PROJECT_DIR": ".",
+  "CI_WORKFLOW_NAME": "CI validation",
+  "CI_GATE_JOB": "required-status-check",
+  "ALL_PREREQUISITES": "test",
+  "TEMPLATE_TARGETS": "keys",
+  "CORE_VERSION": "1.44.0"
+}
