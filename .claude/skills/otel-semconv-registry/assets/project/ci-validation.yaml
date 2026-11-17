@@ -1,0 +1,93 @@
+# The registry part of the CI workflow. Add the section below to the workflow's `jobs:`, above the
+# aggregate job, and these entries to the aggregate job's `needs` (each tagged with the sections
+# its job belongs to; leave out test-policies without the policies section):
+#
+#   - validate-registry # registry
+#   - test-validations # registry
+#   - test-policies # registry policies
+
+  # ==== registry
+  validate-registry:
+    name: Validate registry
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read pinned weaver version
+        id: weaver
+        run: |
+          source versions.env
+          echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install Weaver
+        uses: open-telemetry/weaver/.github/actions/setup-weaver@51a5bf95bdbb2e20fb6e16638e6bbe7dde911e93 # v0.28.0
+        with:
+          version: ${{ steps.weaver.outputs.version }}
+
+      # ==== private
+      # A private repo: git asks gh for credentials, and gh answers with GH_TOKEN, which only the
+      # steps that fetch are given. No token is ever written into a URL.
+      - name: Let git use the workflow's token
+        run: gh auth setup-git
+        env:
+          GH_TOKEN: ${{ github.token }}
+      # ==== end private
+
+      - name: Validate the registry (dependencies + schema + policies)
+        # ==== private
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # ==== end private
+        run: make validate-registry
+
+  test-validations:
+    name: Test validations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read pinned weaver version
+        id: weaver
+        run: |
+          source versions.env
+          echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install Weaver
+        uses: open-telemetry/weaver/.github/actions/setup-weaver@51a5bf95bdbb2e20fb6e16638e6bbe7dde911e93 # v0.28.0
+        with:
+          version: ${{ steps.weaver.outputs.version }}
+
+      - name: Confirm validation fails on each invalid registry in validations_test/
+        run: make test-validations
+
+  # ==== policies
+  test-policies:
+    name: Test policies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read pinned OPA version
+        id: opa
+        run: |
+          source versions.env
+          echo "version=$OPA_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install OPA
+        uses: $/.github/actions/setup-opa
+        with:
+          version: ${{ steps.opa.outputs.version }}
+
+      - name: Unit-test rego policies
+        run: make test-policies
+  # ==== end policies
+  # ==== end registry

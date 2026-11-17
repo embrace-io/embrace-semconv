@@ -1,0 +1,7 @@
+# A valid registry whose known-violations.json lists a violation that no longer occurs. It must
+# fail, so an accepted violation is removed from the list once it's fixed and can't come back
+# unnoticed.
+
+schema_url: https://example.com/schemas/validations-test-case/0.0.0-dev
+description: Case whose known-violations list names a violation the registry no longer has.
+stability: development
