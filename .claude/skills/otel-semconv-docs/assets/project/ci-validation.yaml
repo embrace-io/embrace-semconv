@@ -1,0 +1,52 @@
+# The docs part of the CI workflow. Add the section below to the workflow's `jobs:`, above the
+# aggregate job, and this entry to the aggregate job's `needs`:
+#
+#   - validate-docs # docs
+
+  # ==== docs
+  validate-docs:
+    name: Validate docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read pinned weaver version
+        id: weaver
+        run: |
+          source versions.env
+          echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install Weaver
+        uses: open-telemetry/weaver/.github/actions/setup-weaver@51a5bf95bdbb2e20fb6e16638e6bbe7dde911e93 # v0.28.0
+        with:
+          version: ${{ steps.weaver.outputs.version }}
+
+      # ==== private
+      # A private repo: git asks gh for credentials, and gh answers with GH_TOKEN, which only the
+      # steps that fetch are given. No token is ever written into a URL.
+      - name: Let git use the workflow's token
+        run: gh auth setup-git
+        env:
+          GH_TOKEN: ${{ github.token }}
+      # ==== end private
+
+      - name: Regenerate docs
+        # ==== private
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # ==== end private
+        run: make generate-docs
+
+      - name: Compare committed docs with the regenerated ones
+        uses: $/.github/actions/assert-no-drift
+        with:
+          path: @@DOCS_REPO_PATH@@
+          label: docs
+          regenerate-hint: |
+            make -C @@PROJECT_DIR@@ install-weaver   # once, if weaver is not on PATH
+            make -C @@PROJECT_DIR@@ generate-docs
+            git add @@DOCS_REPO_PATH@@/
+  # ==== end docs
