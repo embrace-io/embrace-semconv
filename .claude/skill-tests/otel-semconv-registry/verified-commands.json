@@ -1,0 +1,58 @@
+{
+  "gh api": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "gh api \"repos/<owner>/<repo>/contents/<registry-dir>/manifest.yaml?ref=<tag>\" -H \"Accept: application/vnd.github.raw\"": {
+    "status": "verified",
+    "how": "Against a public repo and one of its tags: prints the manifest at that tag without the tag in the local clone"
+  },
+  "gh api repos/<owner>/<repo>/releases --jq '[.[] | select(.draft | not)] | .[0:5] | .[] | \"\\(.tag_name) prerelease=\\(.prerelease)\"'": {
+    "status": "verified",
+    "how": "With gh 2.101.0, against open-telemetry/semantic-conventions: one line per recent release, tag then prerelease=true or false"
+  },
+  "gh auth setup-git": {
+    "status": "verified",
+    "how": "In a private repo's CI, with GH_TOKEN on the step: git ls-remote on the repo succeeds and the job passes"
+  },
+  "git ls-remote": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "git ls-remote --tags <repo-url>": {
+    "status": "verified",
+    "how": "With git 2.54.0, against a published registry's repo: one line per tag"
+  },
+  "git ls-remote --tags <repo-url> 'v*'": {
+    "status": "verified",
+    "how": "With git 2.54.0, against a published registry's repo: one line per v* tag"
+  },
+  "git ls-remote https://github.com/open-telemetry/opentelemetry-weaver-packages.git HEAD": {
+    "status": "verified",
+    "how": "With git 2.54.0: prints the policy pack's HEAD commit"
+  },
+  "git merge-base HEAD origin/<default-branch>": {
+    "status": "verified",
+    "how": "With git 2.54.0, in a worktree whose branch is behind origin/main: prints the commit the branch was made from, not origin/main's head"
+  },
+  "git show <tag>:<registry dir>/manifest.yaml": {
+    "status": "verified",
+    "how": "In an SDK repo's clone: prints the manifest at an SDK tag, whose dependencies show whether it has schema_url"
+  },
+  "jq '[.[] | select(.error.type? == \"policy_violation\" and .error.violation.level == \"violation\")": {
+    "status": "verified",
+    "how": "With jq 1.7.1, on weaver 0.28.0's JSON diagnostics for a registry with legacy keys: produces the known-violations list"
+  },
+  "make package": {
+    "status": "reference",
+    "how": "the release part's target, named in prose"
+  },
+  "make print-version": {
+    "status": "reference",
+    "how": "the release part's target, named in prose"
+  },
+  "weaver registry package": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  }
+}
