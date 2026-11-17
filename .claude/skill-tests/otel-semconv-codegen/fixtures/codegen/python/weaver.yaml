@@ -1,0 +1,13 @@
+templates:
+  - pattern: attributes.py.j2
+    # One module per root attribute namespace. Core exposes few public attribute groups to --v2
+    # templates (most of it is still v1 syntax), so group its attributes by namespace instead.
+    # Deprecated attributes are left out: their keys can collide with their replacements once
+    # case-converted (process.context_switch_type vs process.context_switch.type).
+    filter: >
+      (.registry.attributes // [])
+      | map(select(.deprecated | not))
+      | group_by(.key | split(".") | .[0])
+      | map({ namespace: (.[0].key | split(".") | .[0]), attributes: . })
+    application_mode: each
+    file_name: "{{ ctx.namespace | snake_case }}_attributes.py"
