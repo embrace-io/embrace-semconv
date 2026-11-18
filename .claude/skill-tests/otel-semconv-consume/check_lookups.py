@@ -6,7 +6,7 @@ script lives outside the skill, in `skill-tests/<skill>/` next to `skills/<skill
 installed with it.
 Each `<!-- lookup: <name> -->` marker is followed by a bash block. Its first line must print the
 latest release; a second line, where there is one, runs with that release as `<tag>` and must
-print the core release it carries. Every language section with a package must have a lookup.
+print the core release it carries. Every language section must have a lookup.
 Needs network access, bash, curl, jq and an authenticated gh.
 """
 import os
@@ -18,8 +18,6 @@ TESTS = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.join(os.path.dirname(os.path.dirname(TESTS)), "skills", os.path.basename(TESTS))
 LANGUAGES = os.path.join(SKILL, "reference", "languages.md")
 VERSION = re.compile(r"\d+\.\d+\.\d+")
-# Sections that have no package, so no lookup.
-NO_PACKAGE = {".NET"}
 
 
 def lookups(text):
@@ -46,9 +44,8 @@ def main():
 
     sections = re.findall(r"^## (.+)$", text, re.M)
     found = lookups(text)
-    if len(found) != len([s for s in sections if s not in NO_PACKAGE]):
-        problems.append(f"{len(found)} lookups for {len(sections) - len(NO_PACKAGE)} language "
-                        "sections with a package")
+    if len(found) != len(sections):
+        problems.append(f"{len(found)} lookups for {len(sections)} language sections")
 
     status, core, err = run("gh api repos/open-telemetry/semantic-conventions/releases/latest "
                             "--jq .tag_name")
