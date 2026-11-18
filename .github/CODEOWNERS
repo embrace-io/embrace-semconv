@@ -1,0 +1,4 @@
+# Embrace semantic conventions
+* @embrace-io/opensource-android @embrace-io/opensource-apple @embrace-io/opensource-web @embrace-io/opensource-react-native @embrace-io/opensource-flutter @embrace-io/opensource-unity
+# DevOps
+.github @embrace-io/opensource-devops
