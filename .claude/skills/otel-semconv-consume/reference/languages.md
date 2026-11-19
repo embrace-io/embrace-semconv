@@ -69,8 +69,9 @@ For Java, and for Kotlin that records through opentelemetry-java (JVM or Android
 are Java fields, used the same way from Kotlin.
 
 - **Package:** `io.opentelemetry.semconv:opentelemetry-semconv:<version>` (stable) and
-  `io.opentelemetry.semconv:opentelemetry-semconv-incubating:<version>-alpha` (all conventions,
-  stable included), on Maven Central, from
+  `io.opentelemetry.semconv:opentelemetry-semconv-incubating:<version>-alpha` (all conventions;
+  its copies of the stable artifact's attributes and enum values are `@Deprecated` in favour of
+  the stable ones, so take those from the stable artifact), on Maven Central, from
   [semantic-conventions-java](https://github.com/open-telemetry/semantic-conventions-java). Both
   need `io.opentelemetry:opentelemetry-api`. A patch release of the package itself adds a fourth
   component (`1.30.0.1`).
@@ -80,7 +81,9 @@ are Java fields, used the same way from Kotlin.
   debug builds (the package's README, at v1.45.0). The OpenTelemetry instrumentation BOMs manage
   them, often a release behind: `io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom`
   the stable artifact, `opentelemetry-instrumentation-bom-alpha` the `-incubating` one. A project on
-  one resolves the BOM's release unless it declares its own version.
+  one resolves the BOM's release unless it declares its own version; with Gradle, declaring
+  `-incubating` also raises the stable artifact to that release, since `-incubating` depends on
+  it.
 - **Use:** `io.opentelemetry.semconv.HttpAttributes.HTTP_REQUEST_METHOD`, an `AttributeKey`
   (`.getKey()` is the name, for an API that takes a `String`); unstable ones in
   `io.opentelemetry.semconv.incubating.*IncubatingAttributes`. Metric names are `String`s in
@@ -112,8 +115,10 @@ are Java fields, used the same way from Kotlin.
   are `ATTR_*`, `*_VALUE_*` (enum values), `METRIC_*` and `EVENT_*`; the older `SEMATTRS_*` and
   `SemanticAttributes` forms are deprecated.
 - **Unstable:** the `@opentelemetry/semantic-conventions/incubating` entry point, which can break
-  in a minor release. The README says instrumentation libraries copy what they need from it
-  (e.g. into `src/semconv.ts`) rather than import it at runtime.
+  in a minor release. It re-exports the stable constants too, so an import from it isn't
+  necessarily unstable: the constant's stability is the registry's (SKILL.md step 1.4). The
+  README says instrumentation libraries copy what they need from it (e.g. into `src/semconv.ts`)
+  rather than import it at runtime.
 - **Which core release:** the package's version.
 
   <!-- lookup: js -->

@@ -54,12 +54,13 @@ the project needs:
    keep the core conventions: the ones the package has a constant for, and the ones it leaves out
    that the core registry still defines, deprecated ones included. The rest (the project's own
    names, platform properties) aren't core conventions. The search doesn't find undotted names
-   (an event named `exception`), enum values the code sets (`"webjs"` for
-   `telemetry.sdk.language`), or the package's own deprecated forms already imported
-   (`reference/languages.md` names them where a package has any): look for those too.
+   (an event named `exception`), names built from a prefix (`"browser.web_vital." + key`), enum
+   values the code sets (`"webjs"` for `telemetry.sdk.language`), or the package's own deprecated
+   forms already imported (`reference/languages.md` names them where a package has any): look for
+   those too.
 
-   To check a name against the core registry, download its source at the core release the
-   package carries into a scratch directory and search its `model/`:
+   To check a name against the core registry, download its source at the latest core release
+   (step 1.5's `gh api` command prints it) into a scratch directory and search its `model/`:
 
    ```bash
    curl -sSfL -o <dir>/semconv.tar.gz https://github.com/open-telemetry/semantic-conventions/archive/refs/tags/v<release>.tar.gz
@@ -67,11 +68,20 @@ the project needs:
    rg -n -e 'id: <name>$' -e 'key: <name>$' -e 'name: <name>$' <dir>/semantic-conventions-<release>/model
    ```
 
-   No match means it isn't a core convention; a match in a `deprecated/` directory or a
-   `*deprecated.yaml` file means it is deprecated. Where the download isn't possible, read the
-   files one at a time: `gh api "repos/open-telemetry/semantic-conventions/contents/model/<dir>?ref=v<release>"`
-   lists a directory, and adding `-H "Accept: application/vnd.github.raw"` to a file's path prints
-   it.
+   A match counts only where it defines an attribute, a metric or an event; the files are in
+   either format, which each file's `file_format:` line says (none means definition/1):
+   - **definition/2:** `key:` (an attribute), or a `- name:` under `metrics:` or `events:`;
+   - **definition/1:** an `- id:` under `attributes:`, a `metric_name:`, or the `name:` of a group
+     with `type: event`.
+
+   Other matches don't count: a group's own `id:` (attribute group `source`) or an entity's
+   `name:` (`service`) isn't a convention a constant stands for. No counted match means it isn't
+   a core convention; a match in a `deprecated/` directory or a `*deprecated.yaml` file means it
+   is deprecated. A core name with no constant in the package release the project will take is
+   one the package leaves out, or one newer than that release ("When this is the wrong tool": say
+   so). Where the download isn't possible, read the files one at a time:
+   `gh api "repos/open-telemetry/semantic-conventions/contents/model/<dir>?ref=v<release>"` lists
+   a directory, and adding `-H "Accept: application/vnd.github.raw"` to a file's path prints it.
 4. **Which conventions it uses**, and whether each is stable in the core registry.
    `reference/languages.md` says how each package shows it. Where the package doesn't, the
    registry does: read the file the step 1.3 lookup matched, from the matched line down to that
@@ -81,6 +91,21 @@ the project needs:
    core registry's latest release:
    `gh api repos/open-telemetry/semantic-conventions/releases/latest --jq .tag_name`.
    Tell the user when the package is behind, and by how much.
+6. **Ask about unstable and deprecated names** before changing code, listing the hard-coded names
+   and enum values steps 1.3 and 1.4 found in each group, with where they are. List only those
+   step 3 would replace: not test literals that pin a name, or names where a constant can't go.
+   - **Unstable names:** convert them to the package's constants (imported in an application,
+     copied into one file in a library, per step 1.2), or leave them hard-coded?
+   - **Deprecated names the package still has a constant for:** use the deprecated constant (the
+     default: the emitted name doesn't change, and the deprecation becomes visible in the code),
+     or leave them hard-coded? Where the package has a deprecated constant only in its unstable
+     part (Java's `-incubating`, say), a library takes it as an unstable one: copied, per step 1.2.
+
+   Stable names need no question, nor does a stable name whose only constant is in the package's
+   unstable part (Java's metric names): an application imports it, a library copies it. With
+   neither group to list, this step asks nothing. A package behind the core release a name needs
+   is a separate choice ("When this is the wrong tool"), asked either way, alongside these
+   questions when there are any. Step 3 follows the answers.
 
 ## 2. Add the dependency
 
@@ -95,15 +120,23 @@ latest release it can take, there is nothing to add: say so.
 
 ## 3. Use the constants
 
-- Replace each hard-coded convention name, and enum value, with its constant. Keep the value the
-  code emits unchanged: if a hard-coded name has no constant, or only a deprecated one (it is
-  deprecated, renamed, or not in the core registry), or sits where a constant can't go (a Go struct
-  tag, a comment), leave it and list it in the hand-over.
+- Replace each hard-coded convention name, and enum value, with its constant: the stable ones,
+  and the unstable and deprecated ones as the user chose in step 1.6. Keep the value the code
+  emits unchanged: replace a name only with a constant of the same name, never with the one a
+  deprecated name was renamed to, and a value only with a constant from the same attribute's enum
+  (`"GET"` set on the deprecated `http.method` isn't `http.request.method`'s). Moving to the new
+  names changes the telemetry the project sends and is a separate job: don't offer it. A
+  deprecated form of a constant (an older class or prefix for the same name,
+  `reference/languages.md`) is replaced with the current constant for that name, which emits the
+  same value. If a hard-coded name has no constant (the package leaves it out, or it isn't in the
+  core registry), or sits where a constant can't go (a Go struct tag, a comment), leave it and
+  list it in the hand-over.
 - In tests, a literal that pins a name on the wire (what the code emits, or what it reads from
   other systems) stays a literal: a constant compared with itself doesn't pin it. Other test uses
   may take the constants.
-- Imports the project already has that the rules here advise against (a library's unstable or
-  deprecated constants) are listed in the hand-over, not restructured, unless the user asks.
+- Imports the project already has that the rules here advise against (a library's constants for
+  unstable or deprecated names) are listed in the hand-over, not restructured, unless the user
+  asks.
 - The schema URL, where the code sets one, comes from the same package and version as the
   constants.
 - In a library that copies unstable conventions (step 1.2), put the copies in one file of their
@@ -140,5 +173,5 @@ review the unstable ones the project uses, copied or imported.
 
 Say which package and release you added and the core release it carries (and how far behind the
 latest core release it is), what you replaced, any hard-coded names left and why, which unstable
-conventions are copied or imported, and how bumps will arrive (Renovate or Dependabot, or by hand
-for Go and where the repo runs neither).
+conventions are copied or imported and which deprecated constants are used, and how bumps will
+arrive (Renovate or Dependabot, or by hand for Go and where the repo runs neither).
