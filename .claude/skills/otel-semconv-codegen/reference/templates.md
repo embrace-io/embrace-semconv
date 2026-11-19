@@ -253,7 +253,7 @@ checked against:
 |---|---|
 | Go | [`semconv/templates/registry/go`](https://github.com/open-telemetry/opentelemetry-go/tree/v1.47.0/semconv/templates/registry/go) in opentelemetry-go v1.47.0 |
 | Java | [`buildscripts/templates/registry/java`](https://github.com/open-telemetry/semantic-conventions-java/tree/v1.45.0/buildscripts/templates/registry/java) (and `incubating_java`) in semantic-conventions-java v1.45.0 |
-| Kotlin on opentelemetry-kotlin, Kotlin Multiplatform | [`semconv/templates/registry/kotlin`](https://github.com/open-telemetry/opentelemetry-kotlin/tree/v0.10.0/semconv/templates/registry/kotlin) in opentelemetry-kotlin v0.10.0 |
+| Kotlin (plain `String` constants, for any OpenTelemetry API) | [`semconv/templates/registry/kotlin`](https://github.com/open-telemetry/opentelemetry-kotlin/tree/v0.10.0/semconv/templates/registry/kotlin) in opentelemetry-kotlin v0.10.0 |
 | JavaScript, TypeScript | [`scripts/semconv/templates/registry/ts-stable`](https://github.com/open-telemetry/opentelemetry-js/tree/semconv/v1.45.0/scripts/semconv/templates/registry/ts-stable) (and `ts-experimental`) in opentelemetry-js semconv/v1.45.0 |
 | Python | [`scripts/semconv/templates/registry`](https://github.com/open-telemetry/opentelemetry-python/tree/v1.45.2/scripts/semconv/templates/registry) in opentelemetry-python v1.45.2 |
 | Rust | [`opentelemetry-semantic-conventions/scripts/templates/registry/rust`](https://github.com/open-telemetry/opentelemetry-rust/tree/opentelemetry-semantic-conventions-0.33.1/opentelemetry-semantic-conventions/scripts/templates/registry/rust) in opentelemetry-rust's semantic-conventions 0.33.1 |
