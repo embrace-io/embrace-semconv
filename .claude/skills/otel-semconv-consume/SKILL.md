@@ -1,6 +1,6 @@
 ---
 name: otel-semconv-consume
-description: Use the OpenTelemetry core semantic conventions in a project through the constants package its language SIG publishes for other projects to depend on (Go, Java and Kotlin on opentelemetry-java, JavaScript and TypeScript, Python), with no code generation; for Kotlin Multiplatform, opentelemetry-kotlin and Swift, where the constants are part of the SDK, it points to generating them instead, asking first when the project already uses the SDK's constants. Use when a project needs attribute, metric or event names from the core semantic conventions registry, e.g. to replace hard-coded names like "http.request.method" with constants, or to add the semantic conventions dependency to an application, service, SDK or instrumentation library.
+description: Use the OpenTelemetry core semantic conventions in a project through the constants package its language SIG publishes for other projects to depend on (Go, Java, JavaScript and TypeScript, Python), with no code generation; for Kotlin, on any OpenTelemetry API, and Swift, which have no such package of their own, it points to generating them instead, asking first when the project already uses constants from its SDK or from the Java package. Use when a project needs attribute, metric or event names from the core semantic conventions registry, e.g. to replace hard-coded names like "http.request.method" with constants, or to add the semantic conventions dependency to an application, service, SDK or instrumentation library.
 ---
 
 # Using the core semantic conventions from a published package
@@ -18,10 +18,10 @@ Generate the code with weaver instead (the otel-semconv-codegen skill, where it 
 the project needs:
 
 - a language with no such package: any language `reference/languages.md` doesn't cover, including
-  Kotlin Multiplatform, Kotlin on opentelemetry-kotlin, and Swift, whose constants are part of
-  their SDK rather than a package of their own (`reference/languages.md` says why). A project
-  that already uses its SDK's constants isn't moved without asking: find its hard-coded names
-  (step 1.3), say that the constants it uses are the SDK's rather than a published package, and
+  Kotlin, whichever OpenTelemetry API it records with, and Swift, which have no package of
+  their own constants (`reference/languages.md` says why). A project that already uses
+  constants from one of these (its SDK's, or the Java package's from Kotlin) isn't moved without
+  asking: find its hard-coded names (step 1.3), say where the constants it uses come from, and
   ask the user whether to keep using them for this change or generate its own;
 - conventions from a registry other than the core one (a federated registry that extends it), or
   conventions of its own;
@@ -33,9 +33,9 @@ the project needs:
 
 1. **Language and build tool**, and where the project declares dependencies (`go.mod`,
    `build.gradle(.kts)` or a version catalog, `pom.xml`, `package.json`, `pyproject.toml` or
-   `requirements*.txt`). In a monorepo, the module that needs it. For Kotlin, which OpenTelemetry
-   API it records with: on opentelemetry-java it uses the Java package; on opentelemetry-kotlin, or
-   in Kotlin Multiplatform code, this is the wrong tool (above).
+   `requirements*.txt`). In a monorepo, the module that needs it. Kotlin code is the wrong tool
+   (above), whichever OpenTelemetry API it records with; in a module that mixes Java and Kotlin,
+   ask the user which way to go.
 2. **Library or application.** A library (an instrumentation library, an SDK, anything other
    projects depend on) uses only stable conventions from the package, and copies the unstable ones
    it needs into its own code, unless the language's package promises that its unstable constants

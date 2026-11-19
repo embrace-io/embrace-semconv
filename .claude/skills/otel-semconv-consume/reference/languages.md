@@ -12,23 +12,25 @@ tests, so each one is known to work.
 | Language | Package | Version = core release? | Unstable conventions |
 |---|---|---|---|
 | Go | `go.opentelemetry.io/otel/semconv/v<core release>` | in the import path | no split; every release's package is frozen |
-| Java, and Kotlin on opentelemetry-java | `io.opentelemetry.semconv:opentelemetry-semconv` | yes | separate `-incubating` artifact |
+| Java | `io.opentelemetry.semconv:opentelemetry-semconv` | yes | separate `-incubating` artifact |
 | JavaScript, TypeScript | `@opentelemetry/semantic-conventions` | yes | `/incubating` entry point |
 | Python | `opentelemetry-semantic-conventions` | no (beta versions) | `opentelemetry.semconv._incubating` |
 
-**No package to depend on.** In these, the constants are part of the SDK, versioned with it,
-rather than a semantic conventions package published for other projects to depend on, so a
-project in one of them generates its own with weaver (SKILL.md, "When this is the wrong tool"):
+**No package to depend on.** In these, no package of the language's own constants is published
+for other projects to depend on, so a project in one of them generates its own with weaver
+(SKILL.md, "When this is the wrong tool"):
 
-- **Kotlin Multiplatform, and Kotlin on opentelemetry-kotlin:** `io.opentelemetry.kotlin:semconv`
-  is opentelemetry-kotlin's own. Its version is the SDK's, and its README covers only
-  regenerating it.
+- **Kotlin, whichever OpenTelemetry API it records with** (opentelemetry-kotlin, Kotlin
+  Multiplatform, or opentelemetry-java): `io.opentelemetry.kotlin:semconv` is
+  opentelemetry-kotlin's own, versioned with its SDK, and its README covers only regenerating it.
+  The Java package (below) is a Java library: a Kotlin project generates Kotlin constants rather
+  than taking a Java dependency for them.
 - **Swift:** the constants are part of the `OpenTelemetryApi` library (opentelemetry-swift-core,
   and opentelemetry-swift), not a package of their own, and they move with the SDK's releases:
   swift-core 2.6.0 carries core 1.38.0, and from 2.4.1 it needs a Swift 6 toolchain.
 
-A project that already uses one of these: SKILL.md, "When this is the wrong tool", says to ask
-the user first.
+A project that already uses constants from one of these (its SDK's, or the Java package's from
+Kotlin): SKILL.md, "When this is the wrong tool", says to ask the user first.
 
 ## Go
 
@@ -63,10 +65,7 @@ the user first.
   reading `MIGRATION.md` in the new version's directory. Several versions can coexist in a build,
   but keep one per module.
 
-## Java and Kotlin on opentelemetry-java
-
-For Java, and for Kotlin that records through opentelemetry-java (JVM or Android): the constants
-are Java fields, used the same way from Kotlin.
+## Java
 
 - **Package:** `io.opentelemetry.semconv:opentelemetry-semconv:<version>` (stable) and
   `io.opentelemetry.semconv:opentelemetry-semconv-incubating:<version>-alpha` (all conventions;
