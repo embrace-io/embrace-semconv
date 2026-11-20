@@ -1,0 +1,78 @@
+// Renovate bumps the tool and policy pins in versions.env, the core registry dependency in
+// manifest.yaml files, a codegen project's SOURCE_REGISTRY release, and the pinned GitHub
+// Actions. Each bump arrives as a pull request whose CI shows whether it changes what passes.
+// Needs the Renovate GitHub app.
+//
+// Renovate reads ONE config file. If the repo already has one (renovate.json, renovate.json5,
+// .renovaterc*, .github/renovate.json*), merge the customManagers and packageRules below into it,
+// keep its own extends, schedule and labels, and don't add this file. If the repo already bumps
+// the core registry another way (a scheduled workflow, say), leave out the two manifest.yaml match
+// strings, the manifest.yaml file pattern and the "core registry" rule. `managerFilePatterns`
+// needs a recent Renovate. A repo's own config validator that reports "disallowed fields:
+// managerFilePatterns" runs an old one: an unversioned `renovate` on a Node newer than the latest
+// Renovate supports gets an old release, so make it use the version the repo's Renovate runs,
+// falling back to versions.env's RENOVATE_VERSION. Only a validator pinned to an old Renovate on
+// purpose needs `fileMatch`, the same patterns without the slashes.
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    "helpers:pinGitHubActionDigestsToSemver"
+  ],
+  // Once a week, Mondays before 08:00 UTC
+  "schedule": ["* 0-7 * * 1"],
+  // The pins carry `# renovate:` comments naming their datasource; keep one match string here for
+  // each kind of annotated pin. The patterns match at any depth, for projects in a subdirectory.
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)versions\\.env$/",
+        "/(^|/)manifest\\.yaml$/",
+        "/(^|/)Makefile$/"
+      ],
+      "matchStrings": [
+        // versions.env: WEAVER_VERSION=vX.Y.Z
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+WEAVER_VERSION=(?<currentValue>\\S+)",
+        // versions.env: OPA_VERSION=vX.Y.Z
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+OPA_VERSION=(?<currentValue>\\S+)",
+        // versions.env: RENOVATE_VERSION=X.Y.Z
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+RENOVATE_VERSION=(?<currentValue>\\S+)",
+        // versions.env: the shared policy pack's URL and commit. git-refs follows the branch named
+        // by `ref=` (currentValue) and bumps the commit (currentDigest).
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+ref=(?<currentValue>\\S+)\\s+POLICY_REPO_URL=(?<packageName>\\S+)\\s+POLICY_REPO_REF=(?<currentDigest>\\S+)",
+        // manifest.yaml: the core registry dependency's schema_url version...
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+- schema_url: https://opentelemetry\\.io/schemas/(?<currentValue>\\d+\\.\\d+\\.\\d+)",
+        // ...and its registry_path tag, which must name the same release.
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+- schema_url: \\S+\\s+registry_path:.*?@(?<currentValue>v\\d+\\.\\d+\\.\\d+)\\[model\\]",
+        // Makefile (codegen): SOURCE_REGISTRY pinned to a release tag
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+SOURCE_REGISTRY := \\S+@(?<currentValue>v[^\\[\\s]+)"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      // The core registry's schema_url and registry_path name the same release, in the registry's
+      // manifest and the fixture's alike, so they move in one pull request. Weaver doesn't fail
+      // when the two disagree; `make validate-dependencies` does. A bump can change the golden
+      // files and the docs: its pull request then needs `make update-golden generate-all`.
+      "description": "Bump the core registry dependency everywhere at once",
+      "matchDepNames": ["open-telemetry/semantic-conventions"],
+      "groupName": "core registry"
+    },
+    {
+      "description": "Group GitHub Actions pin bumps",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      // The CLI pin in versions.env and the setup-weaver action's commit name the same weaver
+      // release, so they move in one pull request. This rule comes after the GitHub Actions group
+      // so that the action joins this group instead.
+      "description": "Bump the weaver CLI and its setup action together",
+      "matchDepNames": ["open-telemetry/weaver"],
+      "groupName": "weaver"
+    }
+  ],
+  "labels": ["dependencies"]
+}
