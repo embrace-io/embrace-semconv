@@ -1,0 +1,3 @@
+{
+  "builds_on": ["../otel-semconv-base/assets/project/Makefile"]
+}

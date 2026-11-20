@@ -1,0 +1,42 @@
+{
+  "cargo install": {
+    "status": "reference",
+    "how": "names a way a workflow may install weaver, in prose; not an invocation to run"
+  },
+  "gh api repos/<owner>/<repo>/branches/<branch>/protection": {
+    "status": "verified",
+    "how": "Against a repo with classic protection: lists its required checks; against a ruleset-only repo: 404"
+  },
+  "gh api repos/<owner>/<repo>/rules/branches/<branch>": {
+    "status": "verified",
+    "how": "Against a repo with rulesets: lists its rules (required checks, code_scanning); against one without: []"
+  },
+  "gh search code \"<owner>/<repo>/.github/actions\"": {
+    "status": "verified",
+    "how": "For a repo whose local setup action another repo uses: finds that other repo's workflow"
+  },
+  "make check-policies": {
+    "status": "reference",
+    "how": "an earlier setup's target, named in the renames table; not one to run"
+  },
+  "make generate": {
+    "status": "reference",
+    "how": "the codegen part's target, named in prose"
+  },
+  "make package": {
+    "status": "reference",
+    "how": "the release part's target, named in prose"
+  },
+  "make validate-registry": {
+    "status": "reference",
+    "how": "the registry part's target, named in prose"
+  },
+  "weaver registry check": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "weaver registry update-markdown": {
+    "status": "reference",
+    "how": "names the subcommand a repo refreshes hand-written docs pages with, in prose; listed by weaver 0.28.0's registry --help"
+  }
+}
