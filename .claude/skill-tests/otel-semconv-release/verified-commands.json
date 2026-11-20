@@ -1,0 +1,42 @@
+{
+  "gh release create v<version> --draft --title v<version> --notes-file <notes.md>": {
+    "status": "verified",
+    "how": "Against a private test repo: creates a draft with no tag yet, printing .../releases/tag/untagged-..."
+  },
+  "gh release download v<previous-version> -p resolved.yaml -O - | diff - .build/package/resolved.yaml": {
+    "status": "verified",
+    "how": "With gh 2.101.0 and weaver 0.28.0, in a checkout of a published registry after make package with no changes since that release (packaged with weaver 0.26.1): no output, exit 0"
+  },
+  "gh release list --json tagName,isDraft --jq '.[] | select(.isDraft) | .tagName'": {
+    "status": "verified",
+    "how": "Against a test repo, after the draft is created: prints v<version>"
+  },
+  "gh run list --workflow \"@@CI_WORKFLOW_NAME@@\" --commit <sha>": {
+    "status": "verified",
+    "how": "With the full 40-character sha: shows the commit's CI run; with a short sha: prints nothing, exit 0"
+  },
+  "gh run list --workflow release.yml --limit 1": {
+    "status": "verified",
+    "how": "With gh 2.101.0, in a checkout of a repo that has run the Release workflow: one line for the newest run"
+  },
+  "gh run watch <run-id> --exit-status": {
+    "status": "verified",
+    "how": "Against a test repo's release run: follows the run, exits 0 when it succeeds and non-zero when it fails"
+  },
+  "gh workflow run release.yml --ref <default-branch>": {
+    "status": "verified",
+    "how": "Against a test repo: dispatches the Release workflow and prints the run URL, its ID last"
+  },
+  "git log --oneline v<previous-version>..origin/<default-branch> -- <registry directory>": {
+    "status": "verified",
+    "how": "With git 2.54.0, in a checkout of a published registry: lists the commits touching the registry since that release"
+  },
+  "git ls-remote --tags <repo-url> 'v*'": {
+    "status": "verified",
+    "how": "With git 2.54.0, against a published registry's repo: one line per v* tag"
+  },
+  "git rev-parse origin/<default-branch>": {
+    "status": "verified",
+    "how": "Prints the full 40-character sha that gh run list --commit needs"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "PROJECT_DIR": ".",
+  "CI_WORKFLOW_NAME": "CI validation",
+  "CI_GATE_JOB": "required-status-check",
+  "ALL_PREREQUISITES": "validate-registry",
+  "TEMPLATE_TARGETS": "keys",
+  "CORE_VERSION": "1.44.0",
+  "CORE_OLDER_VERSION": "1.43.0",
+  "SCHEMA_URL": "https://example.com/schemas/acme/0.1.0-dev",
+  "REGISTRY_STABILITY": "development",
+  "REGISTRY_DESCRIPTION": "Semantic conventions for the Acme SDKs.",
+  "POLICY_PACKAGE": "com.example.schemas.acme",
+  "BASELINE": "",
+  "REPO_URL": "https://github.com/acme/acme-semconv"
+}
