@@ -1,0 +1,54 @@
+{
+  "./gradlew :<module>:compileKotlin": {
+    "status": "verified",
+    "how": "In a JVM Gradle module (Gradle 9.7.1 wrapper): compiles the generated Kotlin, and fails when a template emits an invalid constant name"
+  },
+  "gh api \"repos/<owner>/<repo>/contents/<registry-dir>/manifest.yaml?ref=<tag>\" -H \"Accept: application/vnd.github.raw\"": {
+    "status": "verified",
+    "how": "Against a public repo and one of its tags: prints the manifest at that tag without the tag in the local clone"
+  },
+  "gh api repos/<owner>/<repo>/releases --jq '[.[] | select(.draft | not)] | .[0:5] | .[] | \"\\(.tag_name) prerelease=\\(.prerelease)\"'": {
+    "status": "verified",
+    "how": "With gh 2.101.0, against open-telemetry/semantic-conventions: one line per recent release, tag then prerelease=true or false"
+  },
+  "git diff": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "git status": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "go build ./... && go vet ./...": {
+    "status": "verified",
+    "how": "With go 1.26 on a module importing go.opentelemetry.io/otel/semconv/v1.43.0: both exit 0"
+  },
+  "npm ci": {
+    "status": "verified",
+    "how": "In a monorepo with devEngines (Node ^26.3.0, npm >=11.16.0): installs on Node 26.10.0 with npm 11.19.1; refused with EBADDEVENGINES on Node 24.13.0 with npm 11.6.2"
+  },
+  "npm exec": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "npm pack": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "npm run": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "python3 -m compileall": {
+    "status": "verified",
+    "how": "codegen.py's validate-generated recipe runs it on the generated Python"
+  },
+  "swift build": {
+    "status": "reference",
+    "how": "names the platform's own build command as an example of a validate-generated recipe"
+  },
+  "tsc --noEmit": {
+    "status": "reference",
+    "how": "names the platform's own type-check command as an example of a validate-generated recipe"
+  }
+}
