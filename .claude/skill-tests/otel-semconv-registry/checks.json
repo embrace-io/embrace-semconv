@@ -1,0 +1,5 @@
+{
+  "tokens_doc": "reference/part.md",
+  "makefile": "assets/project/Makefile",
+  "builds_on": ["../otel-semconv-base/assets/project/Makefile"]
+}

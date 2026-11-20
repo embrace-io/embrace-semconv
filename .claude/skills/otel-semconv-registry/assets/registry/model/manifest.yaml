@@ -1,0 +1,10 @@
+# `schema_url` alone identifies this registry. Everything before the last `/` (minus the scheme)
+# is its name, and the last segment is its version. Only the version ever changes.
+schema_url: @@SCHEMA_URL@@
+description: @@REGISTRY_DESCRIPTION@@
+stability: @@REGISTRY_STABILITY@@
+dependencies:
+  # The core registry. Keep it at the version every other dependency depends on.
+  # renovate: datasource=github-tags depName=open-telemetry/semantic-conventions versioning=semver-coerced
+  - schema_url: https://opentelemetry.io/schemas/@@CORE_VERSION@@
+    registry_path: https://github.com/open-telemetry/semantic-conventions@v@@CORE_VERSION@@[model]

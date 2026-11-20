@@ -1,0 +1,1 @@
+validations_test/registries/two-attributes
