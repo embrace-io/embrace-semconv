@@ -1,0 +1,50 @@
+{
+  "bash <script>": {
+    "status": "reference",
+    "how": "names how the install script is run, in prose; scenarios.py's install scenario runs it"
+  },
+  "cp -R assets/<part>/. <project>/": {
+    "status": "verified",
+    "how": "Copying assets/core/. into an empty directory: the copy has the dotfiles (.gitignore, .weaver.toml) and scripts/, and git diff --no-index with the asset shows nothing"
+  },
+  "gh api repos/<owner>/<repo> --jq .private": {
+    "status": "verified",
+    "how": "Against a public and a private repo: prints false and true"
+  },
+  "gh api repos/open-telemetry/semantic-conventions/releases/latest --jq .tag_name": {
+    "status": "verified",
+    "how": "Prints the core registry's latest release tag, vX.Y.Z (v1.45.0 when checked)"
+  },
+  "gh api repos/open-telemetry/weaver/commits/<tag> --jq .sha": {
+    "status": "verified",
+    "how": "Prints the full commit sha a weaver release tag points at: v0.28.0 gives 51a5bf95bdbb2e20fb6e16638e6bbe7dde911e93, the setup-weaver pin"
+  },
+  "gh api repos/open-telemetry/weaver/releases --jq '.[0].tag_name'": {
+    "status": "verified",
+    "how": "Prints the newest weaver release tag (vX.Y.Z); needs the quotes as written, or zsh globs the brackets"
+  },
+  "gh run watch": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "git diff --no-index <asset> <copy>": {
+    "status": "verified",
+    "how": "On a copied base file: shows only the replaced tokens and deleted sections"
+  },
+  "make package": {
+    "status": "reference",
+    "how": "the glossary names another part's target; not an invocation to run"
+  },
+  "rg --hidden --glob '!.git'": {
+    "status": "verified",
+    "how": "Verify item 1's search over a project: finds @@ tokens in dotfiles, and nothing under .git"
+  },
+  "weaver --version": {
+    "status": "verified",
+    "how": "Prints weaver's version (weaver 0.28.0)"
+  },
+  "weaver registry check": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  }
+}
