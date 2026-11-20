@@ -7,6 +7,9 @@
     "config:best-practices",
     "helpers:pinGitHubActionDigestsToSemver"
   ],
+  // Once a week, Mondays before 08:00 UTC
+  "schedule": ["* 0-7 * * 1"],
+  "labels": ["dependencies"],
   // The pins carry `# renovate:` comments naming their datasource; there is one match string here
   // for each kind of annotated pin.
   "customManagers": [
@@ -48,8 +51,7 @@
     {
       // The core registry's schema_url and registry_path name the same release, in the registry's
       // manifest and the fixture's alike, so they move in one pull request. Weaver doesn't fail
-      // when the two disagree; `make validate-dependencies` does. A bump can change the golden
-      // files and the docs: its pull request then needs `make update-golden generate-all`.
+      // when the two disagree; `make validate-dependencies` does.
       // Once this registry depends on one that itself depends on the core registry, the core
       // registry's version must match that dependency's (AGENTS.md, "Dependencies").
       "description": "Bump the core registry dependency everywhere at once",
