@@ -19,8 +19,7 @@
     "config:best-practices",
     "helpers:pinGitHubActionDigestsToSemver"
   ],
-  // Open bump pull requests once a week, Mondays before 08:00 UTC, so they arrive together
-  // instead of whenever a release (or a commit to the policy pack's main branch) lands.
+  // Once a week, Mondays before 08:00 UTC
   "schedule": ["* 0-7 * * 1"],
   // The pins carry `# renovate:` comments naming their datasource; keep one match string here for
   // each kind of annotated pin. The patterns match at any depth, for projects in a subdirectory.
