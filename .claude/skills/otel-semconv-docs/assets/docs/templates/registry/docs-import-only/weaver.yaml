@@ -1,0 +1,15 @@
+# The root namespaces of the definitions the registry only imports: the docs templates would
+# otherwise document them as the registry's own, so generate-docs leaves these namespaces out. A
+# namespace that holds any of the registry's own definitions is kept. A definition whose
+# provenance has a source came from a dependency.
+templates:
+  - pattern: namespaces.json.j2
+    filter: >
+      def ns: split(".") | .[0];
+      def names: [(.registry.attributes // [])[] | {own: (.provenance.source | not), ns: (.key | ns)}]
+        + [(.registry.events // [], .registry.metrics // [])[] | {own: (.provenance.source | not), ns: (.name | ns)}]
+        + [(.registry.spans // [], .registry.entities // [])[] | {own: (.provenance.source | not), ns: (.type | ns)}];
+      names as $all
+      | {namespaces: (([$all[] | select(.own | not) | .ns] | unique) - ([$all[] | select(.own) | .ns] | unique))}
+    application_mode: single
+    file_name: namespaces.json
