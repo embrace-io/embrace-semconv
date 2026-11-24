@@ -1,0 +1,9 @@
+{#- keys.txt.j2: every convention the fixture resolves to, by kind, one identifier per line -#}
+{%- set ids = {"attribute_groups": "id", "attributes": "key", "entities": "type", "events": "name",
+               "metrics": "name", "spans": "type"} %}
+{%- for entry in ctx %}
+{{ entry.kind }}:
+{%- for id in entry.value | map(attribute=ids[entry.kind]) | sort %}
+  {{ id }}
+{%- endfor %}
+{%- endfor %}

@@ -1,0 +1,166 @@
+{
+  "./gradlew :<module>:compileReleaseKotlin :<module>:testDebugUnitTest": {
+    "status": "verified",
+    "how": "In an Android library module (Gradle 8.7 wrapper), as a validate-generated recipe: compiles the generated Kotlin and runs a unit test of known keys; fails when a template emits an invalid constant name (compile) and when it appends .broken to every key (the test)"
+  },
+  "./gradlew :<module>:compileKotlin": {
+    "status": "verified",
+    "how": "In a JVM Gradle module (Gradle 9.7.1 wrapper): compiles the generated Kotlin, and fails when a template emits an invalid constant name"
+  },
+  "bash <script>": {
+    "status": "reference",
+    "how": "names how the install script is run, in prose; scenarios.py's install scenario runs it"
+  },
+  "cp -R assets/<part>/. <project>/": {
+    "status": "verified",
+    "how": "Copying assets/core/. into an empty directory: the copy has the dotfiles (.gitignore, .weaver.toml) and scripts/, and git diff --no-index with the asset shows nothing"
+  },
+  "gh repo view <owner>/<repo> --json defaultBranchRef --jq .defaultBranchRef.name": {
+    "status": "verified",
+    "how": "Prints the default branch on GitHub: main for embrace-io/embrace-semconv, develop for signalfx/splunk-otel-android"
+  },
+  "gh release download": {
+    "status": "reference",
+    "how": "names the download command in prose, for the error it prints on a release with no matching asset; the full form below is run"
+  },
+  "gh release download v<version> --repo <owner>/<repo> --pattern resolved.yaml --dir <scratch dir>": {
+    "status": "verified",
+    "how": "With gh 2.104.0, embrace-io/embrace-semconv v0.3.0: writes resolved.yaml (file_format resolved/2.0) into the directory; the release's assets are manifest.yaml and resolved.yaml. On open-telemetry/semantic-conventions v1.44.0, which has no release assets, it exits 1 with 'no assets to download'"
+  },
+  "rg -n -e '^- key:' <scratch dir>/resolved.yaml": {
+    "status": "verified",
+    "how": "On embrace-semconv v0.3.0's resolved.yaml: one line per attribute_catalog entry (emb.session_part_id, emb.user_session_id)"
+  },
+  "gh api \"repos/<owner>/<repo>/contents/<registry-dir>/manifest.yaml?ref=<tag>\" -H \"Accept: application/vnd.github.raw\"": {
+    "status": "verified",
+    "how": "Against a public repo and one of its tags: prints the manifest at that tag without the tag in the local clone"
+  },
+  "gh api repos/<owner>/<repo> --jq .private": {
+    "status": "verified",
+    "how": "Against a public and a private repo: prints false and true"
+  },
+  "gh api repos/<owner>/<repo>/releases --jq '[.[] | select(.draft | not)] | .[0:5] | .[] | \"\\(.tag_name) prerelease=\\(.prerelease)\"'": {
+    "status": "verified",
+    "how": "With gh 2.101.0, against open-telemetry/semantic-conventions: one line per recent release, tag then prerelease=true or false"
+  },
+  "gh api repos/open-telemetry/weaver/commits/<tag> --jq .sha": {
+    "status": "verified",
+    "how": "Prints the full commit sha a weaver release tag points at: v0.28.0 gives 51a5bf95bdbb2e20fb6e16638e6bbe7dde911e93, the setup-weaver pin"
+  },
+  "gh api repos/open-telemetry/weaver/releases --jq '.[0].tag_name'": {
+    "status": "verified",
+    "how": "Prints the newest weaver release tag (vX.Y.Z); needs the quotes as written, or zsh globs the brackets"
+  },
+  "gh run watch": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "gh auth token": {
+    "status": "verified",
+    "how": "Prints the active account's token; workflows.py passes it to zizmor as GH_TOKEN for its online audits, and runs offline when it prints nothing"
+  },
+  "gh pr list --repo <owner>/<repo> --state all --limit 1 --search 'author:app/renovate sort:updated-desc' --json body --jq '.[0].body // \"\" | capture(\"renovate-debug:(?<f>[A-Za-z0-9+/=]+)\").f | @base64d | fromjson | .updatedInVer // .createdInVer'": {
+    "status": "verified",
+    "how": "renovate_version.py runs it from renovate.md: on a repo the hosted Renovate app opens pull requests in (open-telemetry/opentelemetry-js), the version its latest one's renovate-debug footer names (e.g. 44.249.1); on one it never has (octocat/Hello-World), nothing, exit 0. The same lookup inside the validator step falls back to versions.env's pin there"
+  },
+  "git add": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "git diff": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "git diff --no-index <asset> <copy>": {
+    "status": "verified",
+    "how": "On a copied file: shows only the replaced tokens and deleted sections"
+  },
+  "git init": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "git status": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "go build ./... && go vet ./...": {
+    "status": "verified",
+    "how": "With go 1.26 on a module importing go.opentelemetry.io/otel/semconv/v1.43.0: both exit 0"
+  },
+  "npm ci": {
+    "status": "verified",
+    "how": "In a monorepo with devEngines (Node ^26.3.0, npm >=11.16.0): installs on Node 26.10.0 with npm 11.19.1; refused with EBADDEVENGINES on Node 24.13.0 with npm 11.6.2"
+  },
+  "jq -r '.repositories[].packageFiles.regex[]? | .packageFile as $file | .deps[]": {
+    "status": "verified",
+    "how": "Run from the doc on the report above: one '<file> <depName> <currentValue>' line per extracted pin, two per manifest core registry (schema_url, registry_path), e.g. 'versions.env open-telemetry/weaver v0.28.0'"
+  },
+  "npm view renovate version": {
+    "status": "verified",
+    "how": "Prints the latest published version (44.131.1 when 44.131.1 was the broken release; then 44.131.2). It doesn't say whether the release installs: `npx --yes --package=renovate@<version> -- renovate --version` does (44.131.1: EUNSUPPORTEDPROTOCOL; 44.131.0: prints the version)"
+  },
+  "npx --package=renovate": {
+    "status": "verified",
+    "how": "`npx --yes --package=renovate -- renovate --version` on Node 26.10 gives 37.440.7 (engines '^18.12.0 || >=20.0.0', the last open-ended range; 38.0.0 is '^20.15.1', 44.129.0 '^24.11.0'), on Node 24.13 44.129.0; with renovate@latest both give 44.129.0 (Node 26: EBADENGINE warning only). 37.440.7's validator rejects the asset's renovate.json5 with 'Custom Manager contains disallowed fields: managerFilePatterns' (as a repo's own unversioned validator workflow did in CI), and doesn't know --no-global (it reads it as a file); 44.129.0 on Node 26 validates it"
+  },
+  "npx --yes --package=renovate@<RENOVATE_VERSION> -- renovate --platform=local --dry-run=extract --report-type=file --report-path=<scratch dir>/renovate-report.json > <scratch dir>/renovate.log 2>&1": {
+    "status": "verified",
+    "how": "Run from the doc on a rendered codegen project with the renovate part (renovate_extract.py): the report lists every annotated pin, no token needed. The same project with nothing staged extracts 0 pins: it reads only tracked files. In a repo whose devEngines pin Node ^26.3.0, on Node 26.10: logs 'Unsupported node environment detected' (renovate's engines: node ^24.11.0) and exits 1, but writes the report with the Makefile's SOURCE_REGISTRY and versions.env's WEAVER_VERSION; git status unchanged after it"
+  },
+  "npx --yes --package=renovate@<RENOVATE_VERSION> -- renovate-config-validator --no-global <config file>": {
+    "status": "verified",
+    "how": "On assets/renovate/.github/renovate.json5: 'Validating ... as repo config', 'Config validated successfully'; without --no-global the same file is 'Validating ... as global config'. Also prints a harmless re2 warning: MODULE_NOT_FOUND (Node 24), ERR_DLOPEN_FAILED (Node 26), then 'falling back to RegExp'. Pinned because @latest once resolved to 44.131.1, which npm can't install (EUNSUPPORTEDPROTOCOL, 'Unsupported URL Type \"patch:\"' in a dependency); 44.131.0 and 44.130.0 install and run (`renovate --version`)"
+  },
+  "npx --yes --package=renovate@<version> -- renovate --version": {
+    "status": "verified",
+    "how": "Prints the version when that release installs (44.125.1, 44.112.0, 44.131.0); when one doesn't install it exits non-zero with only npm's 'A complete log of this run can be found' line (44.132.0, 44.131.3, 44.131.2, stopping after fetching @renovatebot/osv-offline-db), so the release before it is tried"
+  },
+  "npm exec": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "npm pack": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "npm run": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  },
+  "python3 -m compileall": {
+    "status": "verified",
+    "how": "codegen.py's validate-generated recipe runs it on the generated Python"
+  },
+  "rg --hidden --glob '!.git'": {
+    "status": "verified",
+    "how": "Verify item 1's search over a project: finds @@ tokens in dotfiles, and nothing under .git"
+  },
+  "swift build": {
+    "status": "reference",
+    "how": "names the platform's own build command as an example of a validate-generated recipe"
+  },
+  "tsc --noEmit": {
+    "status": "reference",
+    "how": "names the platform's own type-check command as an example of a validate-generated recipe"
+  },
+  "uv tool run zizmor --offline .github": {
+    "status": "verified",
+    "how": "With uv 0.13.9 on a rendered project's .github (the action and the CI workflow): zizmor v1.33.1, 'No findings to report'; offline, so it needs no token. Which zizmor release uv runs depends on its cache, not checked"
+  },
+  "weaver registry resolve -r \"<SOURCE_REGISTRY>\" --v2 -f json -o <scratch dir>/resolved.json": {
+    "status": "verified",
+    "how": "With weaver 0.28.0 on the core registry at v1.44.0: prints that the command is deprecated, then writes the v2 resolved registry as JSON; it applies the .weaver.toml found from the working directory"
+  },
+  "jq -r '.registry.attributes[].key' <scratch dir>/resolved.json": {
+    "status": "verified",
+    "how": "On the file above: one key per line, 940 for core 1.44.0 (android.app.state first)"
+  },
+  "weaver --version": {
+    "status": "verified",
+    "how": "Prints weaver's version (weaver 0.28.0)"
+  },
+  "weaver registry check": {
+    "status": "reference",
+    "how": "names a tool or subcommand in prose; not an invocation to run"
+  }
+}

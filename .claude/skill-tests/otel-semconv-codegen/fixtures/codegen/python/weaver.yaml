@@ -1,0 +1,17 @@
+templates:
+  - pattern: attributes.py.j2
+    # One module per root attribute namespace. The core registry exposes few public attribute
+    # groups to --v2 templates (most of it is still v1 syntax), so group its attributes by
+    # namespace instead. Deprecated attributes are kept, and marked: a deprecated key whose
+    # constant name collides with a current one's once case-converted
+    # (process.context_switch_type and process.context_switch.type) gets a _DEPRECATED suffix.
+    filter: >
+      (.registry.attributes // [])
+      | map(select(.provenance.source | not))
+      | [.[] | select(.deprecated | not) | .key | gsub("\\."; "_") | ascii_upcase] as $current
+      | map(. + { name: ((.key | gsub("\\."; "_") | ascii_upcase) as $n
+          | if .deprecated and ($current | any(. == $n)) then $n + "_DEPRECATED" else $n end) })
+      | group_by(.key | split(".") | .[0])
+      | map({ namespace: (.[0].key | split(".") | .[0]), attributes: . })
+    application_mode: each
+    file_name: "{{ ctx.namespace | snake_case }}_attributes.py"

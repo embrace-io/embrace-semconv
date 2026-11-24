@@ -1,0 +1,5 @@
+templates:
+  - pattern: keys.txt.j2
+    filter: >
+      .registry | to_entries | map({kind: .key, value: .value}) | sort_by(.kind)
+    application_mode: single
