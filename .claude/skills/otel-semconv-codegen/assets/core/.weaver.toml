@@ -1,0 +1,6 @@
+# Weaver applies the first .weaver.toml it finds walking up from the working directory, so without
+# this file one in a parent directory would apply to every make target here, and could skip
+# policies or redirect dependencies to other copies. Only `[template]` settings belong here: some
+# templates read settings from this file alone. Every other setting goes on the weaver command
+# lines in the Makefile, which CI and local runs share. Weaver notes this file on every run
+# ("Experimental! - Found config"): that is expected.
