@@ -39,13 +39,24 @@ def fallback_step():
 
 
 def dotslash_form():
-    """(the `uses:` value, the comment ending its line) layout.md's actionlint form gives."""
+    """(the `uses:` value, the comment ending its line, the header line replacing the `$/` one)
+    layout.md's actionlint form gives."""
     layout = read(os.path.join(SKILL, "reference", "layout.md"))
     uses = re.search(r"`uses: (\./\.github/actions/assert-no-drift)`", layout)
     comment = re.search(r"`(# zizmor: ignore\[self-repository\])`", layout)
-    if not uses or not comment:
+    header = re.search(r"replace it with\s+`(# [^`]+)`", layout)
+    if not uses or not comment or not header:
         raise SystemExit("layout.md: no actionlint form for the drift step")
-    return uses.group(1), comment.group(1)
+    return uses.group(1), comment.group(1), re.sub(r"\s+", " ", header.group(1))
+
+
+def dependabot_ignore():
+    """The dependency-name layout.md's Dependabot ignore entry gives for setup-weaver."""
+    layout = read(os.path.join(SKILL, "reference", "layout.md"))
+    match = re.search(r"```yaml\n\s*ignore:\n\s*- dependency-name: (\S+)\n\s*```", layout)
+    if not match:
+        raise SystemExit("layout.md: no Dependabot ignore entry for setup-weaver")
+    return match.group(1)
 
 
 def apply_fallback(text, step):
@@ -139,14 +150,27 @@ def main():
                [sys.executable, RENDER, dest, ",".join(["no-drift", *COLLECTIONS]), TOKENS]):
         return 1
     workflow = os.path.join(dest, ".github", "workflows", "ci-validation.yaml")
-    uses, comment = dotslash_form()
+    uses, comment, header = dotslash_form()
     text = read(workflow)
     found = []
     if "uses: $/.github/actions/assert-no-drift\n" not in text:
         found.append("the workflow has no `uses: $/` drift step to change")
+    old_header = re.search(r"^# .*`uses: \$/…`.*\n", text, re.M)
+    if not old_header:
+        found.append("the workflow has no header line about `uses: $/…` to replace")
+    else:
+        text = text.replace(old_header.group(0), header + "\n")
+    if "$/" in text.replace("uses: $/.github/actions/assert-no-drift\n", ""):
+        found.append("the actionlint form leaves a `$/` outside the drift step")
     with open(workflow, "w", encoding="utf-8") as f:
         f.write(text.replace("uses: $/.github/actions/assert-no-drift\n",
                              f"uses: {uses} {comment}\n"))
+    # Dependabot names a subpath action by its full path (a real Dependabot run named
+    # setup-weaver's that way, and ignored only that name), so the ignore entry must be the
+    # path the workflow's `uses:` gives.
+    if dependabot_ignore() != SETUP_WEAVER.rstrip("@"):
+        found.append(f"layout.md's Dependabot ignore entry {dependabot_ignore()} isn't the "
+                     f"workflow's setup-weaver path {SETUP_WEAVER.rstrip('@')}")
     result = subprocess.run(zizmor + [os.path.join(dest, ".github")], env=env,
                             capture_output=True, text=True)
     output = result.stdout + result.stderr

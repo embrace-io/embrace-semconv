@@ -73,6 +73,33 @@ def core(work):
     if not any(name.endswith(".py") for name in os.listdir(golden)):
         problems.append("core: no Python golden files")
     problems += [f"core: {p}" for p in deprecated_kept(os.path.join(dest, "semconv_attributes"))]
+    problems += [f"core: {p}" for p in templates_copy(work, dest)]
+    return problems
+
+
+def templates_copy(work, dest):
+    """templates.md's whole-registry check: `make validate-generated TEMPLATES=<copy>` generates
+    with the copy, and `make generate` then puts the real output back."""
+    copy = os.path.join(dest, ".build", "templates-copy")
+    shutil.copytree(os.path.join(dest, "templates"), copy)
+    template = os.path.join(copy, "registry", "python", "attributes.py.j2")
+    marker = "Rendered by the copy."
+    text = read(template)
+    if "Generated; do not edit." not in text:
+        return ["the codegen fixture template no longer says `Generated; do not edit.`"]
+    with open(template, "w") as f:
+        f.write(text.replace("Generated; do not edit.", marker))
+    session = os.path.join(dest, "semconv_attributes", "session_attributes.py")
+    problems = []
+    if not run(work, "codegen-core-templates-copy",
+               ["make", "validate-generated", f"TEMPLATES={copy}"], cwd=dest):
+        problems.append("make validate-generated TEMPLATES=<copy> failed")
+    elif marker not in read(session):
+        problems.append("make validate-generated TEMPLATES=<copy> didn't generate with the copy")
+    if not run(work, "codegen-core-templates-restore", ["make", "generate"], cwd=dest):
+        problems.append("make generate failed after the copy's run")
+    elif marker in read(session):
+        problems.append("make generate didn't put the real output back")
     return problems
 
 

@@ -169,6 +169,15 @@ def main():
                               [args.uv, "run", os.path.join(tests, "workflows.py"), "--uv",
                                args.uv, "--work", os.path.join(args.work, "self-test", "f-work")],
                               "the fallback still uses the action"))
+        # A Dependabot ignore entry under the repo's name, which Dependabot doesn't match.
+        skill, tests = copy_skill(args.work, "dependabot")
+        mutate(skill, "reference/layout.md",
+               "- dependency-name: open-telemetry/weaver/.github/actions/setup-weaver",
+               "- dependency-name: open-telemetry/weaver")
+        results.append(caught("a Dependabot ignore entry that misses setup-weaver",
+                              [args.uv, "run", os.path.join(tests, "workflows.py"), "--uv",
+                               args.uv, "--work", os.path.join(args.work, "self-test", "d-work")],
+                              "Dependabot ignore entry"))
     print(("ok" if all(results) else "FAILED") + f": self-test ({len(results)} cases)")
     return 0 if all(results) else 1
 

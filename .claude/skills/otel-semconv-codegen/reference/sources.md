@@ -91,3 +91,10 @@ runs with `--allow-git-credentials`. Keep the `private` sections (`layout.md`, "
 the Makefile's sets `--allow-git-credentials` in `WEAVER_FLAGS`, and the CI job's give git the
 workflow's token through gh's credential helper, never in a URL. For a registry in another
 private repo, the workflow's own token isn't enough: use a token with read access to that repo.
+
+Locally, weaver takes the credential helper from the user's own git config (`--global`), not
+from the system config of the git that comes with Xcode, which is where macOS sets the
+`osxkeychain` helper: so `git` can clone the repo while `make generate` fails with "Failed to
+obtain credentials". Then ask the user to set a helper in their own config, `gh auth setup-git`
+or `git config --global credential.helper osxkeychain`: it changes every repo's git
+configuration on their machine, so don't do it for them.

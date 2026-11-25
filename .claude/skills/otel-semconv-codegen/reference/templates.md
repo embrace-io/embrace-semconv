@@ -163,6 +163,10 @@ annotation class, a package marker) is rendered by its own template with
   fewer escapes (Biome, Prettier) fails its check on a string holding the quote the template
   chose: pick the quote per string the same way in the template (`"` when the value contains
   `'`), or keep the generated code out of that check.
+- **Links in briefs and notes** are Markdown, and the core registry's are relative to its repo
+  (`[Version Attributes](/docs/resource/README.md#version-attributes)`), which leads nowhere from
+  generated docs. Rewrite `](/` to the source registry's repo at its pinned tag
+  (`](https://github.com/<owner>/<repo>/blob/<tag>/`), or drop the link and keep its text.
 - **Keep deprecated attributes**, with the language's deprecation marker (`@Deprecated`,
   `@deprecated`, `DeprecationWarning`): consumers compile against them, and dropping a constant
   when its attribute is deprecated breaks their builds. After case conversion a deprecated key
@@ -308,9 +312,12 @@ the enum has one string member and none deprecated, so a template's branches for
 value types and for deprecated members don't show in the golden files. Test those against the
 source registry's generated code (the core registry has deprecated members), and
 `validate-generated`'s compile catches a branch that emits invalid code. With a key list, the
-generated code reaches few branches too: once, render the templates without the list into a
-scratch directory, and compile and lint that output the way `validate-generated` does. The whole
-source registry has what the listed keys don't (long notes, a key with no namespace).
+generated code reaches few branches too: once, copy the templates directory to a scratch
+directory, take the key list out of the copy's filter, and run
+`make validate-generated TEMPLATES=<copy>`. It writes the whole registry's code into
+`GENERATED_DIR` and compiles and lints it as it does the real code; `make generate` then puts
+the real output back. The whole source registry has what the listed keys don't (long notes, a
+key with no namespace).
 
 Weaver never lists imported groups under `.registry.attribute_groups` (their attributes go to
 `.registry.attributes`), so a provenance filter on groups has nothing to filter; keep it anyway,
@@ -353,11 +360,11 @@ the platform can, in place of the section's failing stubs:
 
   It runs in CI, so it must work from a clean checkout with the toolchain the CI job sets up.
 - **`package-generated`** (depends on `validate-generated`) builds what consumers install, into
-  `.build/package-generated/`: a jar/aar, an npm tarball (`npm pack`), a wheel, a Swift package
-  archive. On platforms consumed from source (Go modules), make it prove the module builds from a
-  clean checkout and say so in the Makefile comment. When the code ships inside a package the
-  project already builds and publishes, build that package, or print why there is nothing extra
-  to build: don't invent an artifact.
+  `.build/package-generated/`: a jar/aar, an npm tarball (`npm pack`), a wheel. On platforms
+  consumed from source (Go modules, Swift packages, which consumers build from the repo), make it
+  prove the module or target builds from a clean checkout and say so in the Makefile comment.
+  When the code ships inside a package the project already builds and publishes, build that
+  package, or print why there is nothing extra to build: don't invent an artifact.
 
 Decide with the user whether generated code is committed. If it is, keep the CI job's
 `assert-no-drift` step so a stale commit fails; if not, drop that step.
@@ -384,7 +391,14 @@ Decide with the user whether generated code is committed. If it is, keep the CI 
   runs on a GitHub-hosted runner image that ships it instead, changing only that job's `runs-on`
   (Swift and Xcode come with the `macos-*` images, and an Apple-only package builds only there).
   A step that must run somewhere other than the project directory (e.g. `npm ci` at a monorepo's
-  root) sets its own `working-directory:`.
+  root) sets its own `working-directory:`. Pin the setup action the way the repo's other
+  workflows pin it (their commit, kept); where none does, pin its release's commit, looked up as
+  `layout.md`'s "Weaver's setup action" does for setup-weaver.
+- **A home the build compiles.** When nothing in the build compiles `GENERATED_DIR` yet (the
+  code gets "a directory of its own"), add the smallest unit the build compiles there: a Gradle
+  module in `settings.gradle`, a SwiftPM target, a workspace package, with the host's usual
+  files for one (lint baseline, ProGuard rules). Whether it is published, or exported as a
+  product, is the user's call: leave it unpublished, and say so in the hand-over.
 - **Package managers that enforce engine versions** (npm's `devEngines`, `engine-strict`) can
   refuse `npm run`, `npx` or `npm exec` on a mismatched local toolchain when the `package.json`
   npm resolves declares them (run from inside a workspace, that is the workspace root's;

@@ -10,7 +10,7 @@
 # ==== project
 .PHONY: all
 
-# Default: validate, then regenerate everything this project owns.
+# Default: usually validate-generated, which regenerates the code, then validates it.
 all: @@ALL_PREREQUISITES@@
 # ==== end project
 

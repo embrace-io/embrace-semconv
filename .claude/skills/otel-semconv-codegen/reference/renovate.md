@@ -47,7 +47,9 @@ pins (env-file values, a Makefile setting). The file's header says how to adapt 
   workflows and no such rule of its own, ask the user before adding it.
 - Where the repo's config already has a custom manager reading one of the same pins (its own
   match string for `WEAVER_VERSION`, say), replace it with the asset's, which reads the pin's
-  `# renovate:` line: two managers reading one pin give it twice.
+  `# renovate:` line: two managers reading one pin give it twice. A rule of its own for weaver (a
+  weaver group of its own) is replaced by the asset's `weaver` rule the same way, keeping any
+  setting of its that the asset's doesn't set (a schedule, labels).
 - A build tool's own weaver pin (a Gradle or npm script that runs weaver) gets the same `depName`,
   `open-telemetry/weaver`, so the `weaver` group bumps it with the rest.
 

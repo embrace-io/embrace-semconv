@@ -55,6 +55,14 @@
     "status": "reference",
     "how": "names a tool or subcommand in prose; not an invocation to run"
   },
+  "gh auth setup-git": {
+    "status": "verified",
+    "how": "Run with GIT_CONFIG_GLOBAL pointing at a scratch file: it writes gh as the credential helper for github.com there, and `make generate` from a registry in a private repo then succeeds where, with only the Xcode git's system osxkeychain helper, weaver fails with 'Failed to obtain credentials'"
+  },
+  "git config --global credential.helper osxkeychain": {
+    "status": "verified",
+    "how": "Run with GIT_CONFIG_GLOBAL pointing at a scratch file: with that file as the user's config, `make generate` from a registry in a private repo succeeds on macOS, where the same helper set only in the Xcode git's system config gives 'Failed to obtain credentials'"
+  },
   "gh auth token": {
     "status": "verified",
     "how": "Prints the active account's token; workflows.py passes it to zizmor as GH_TOKEN for its online audits, and runs offline when it prints nothing"

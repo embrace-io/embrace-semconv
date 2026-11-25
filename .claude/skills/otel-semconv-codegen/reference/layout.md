@@ -152,14 +152,25 @@ Delete an entry when any of its tags isn't set up.
   new aggregate job's name. Its jobs that no job here replaces (a `weaver registry check` of the
   project's own registry, say) move into this workflow as the repo's own jobs, outside the
   sections, each with an entry in the aggregate job's `needs`, except a job whose `if:` skips it
-  on some events: the aggregate job fails on a skipped job, so that one stays out of `needs`.
+  on some events: the aggregate job fails on a skipped job, so that one stays out of `needs`. Its
+  `run:` steps now start in the project directory (the workflow's `defaults`), so a moved job
+  whose paths are relative to the repo root sets `defaults: run: working-directory: .` of its
+  own, as the aggregate job does.
 - **Weaver's setup action:** every job that runs weaver installs it with
   `open-telemetry/weaver/.github/actions/setup-weaver`, pinned to the commit of the release
   `versions.env` pins (`gh api repos/open-telemetry/weaver/commits/<tag> --jq .sha`), with that
   version as its `version` input. Bump both together. Where Dependabot bumps the repo's GitHub
-  Actions, it would move the action's commit alone: tell the user, give Dependabot an ignore
-  entry for the action (confirmed when its next run proposes no setup-weaver bump), and bump
-  both together with the `renovate` part or by hand.
+  Actions, it would move the action's commit alone: tell the user, give the `github-actions`
+  entry of `.github/dependabot.yml` an ignore entry for the action, under the action's full path
+  (Dependabot names the dependency that way; `open-telemetry/weaver` alone doesn't match it),
+  and bump both together with the `renovate` part or by hand:
+
+  ```yaml
+      ignore:
+        - dependency-name: open-telemetry/weaver/.github/actions/setup-weaver
+  ```
+
+  Dependabot's next run then closes any setup-weaver pull request it has open.
 - **When the action isn't allowed:** an organization that allowlists actions must allow
   setup-weaver, or every run that uses it fails to start (`startup_failure`). Where it isn't
   allowed and the user doesn't get it allowed, every job installs weaver with the project's own
@@ -185,8 +196,8 @@ Delete an entry when any of its tags isn't set up.
   chooses actionlint, the step calls the action as `uses: ./.github/actions/assert-no-drift`,
   ending that line with `# zizmor: ignore[self-repository]` as such a repo's other workflows do
   (zizmor then reports the finding as ignored); the job checks the repo out first, so `./`
-  resolves. The workflow's header line about `uses: $/…` then describes nothing: say instead
-  that the step uses `./` for actionlint.
+  resolves. The workflow's header line about `uses: $/…` then describes nothing: replace it with
+  `# The drift step calls this repository's action as ./…, after the checkout, for actionlint.`
 - **No path filter:** don't add `paths:` to the workflow. The aggregate job is a required check,
   and a required check that never runs blocks the pull request.
 - **The `validate-generated` job** installs weaver the way the other jobs do: when the workflow
