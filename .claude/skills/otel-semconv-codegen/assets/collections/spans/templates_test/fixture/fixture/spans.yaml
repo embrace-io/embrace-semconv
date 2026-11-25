@@ -1,0 +1,15 @@
+file_format: definition/2
+
+# A fixture span, so the span templates have something to render. It references a core registry
+# attribute, so it doesn't depend on the fixture defining attributes of its own.
+spans:
+  - type: fixture.span
+    kind: client
+    name:
+      note: Span name should be the fixture operation name.
+    requirement_level: recommended
+    stability: development
+    brief: A fixture span.
+    attributes:
+      - ref: session.id
+        requirement_level: recommended

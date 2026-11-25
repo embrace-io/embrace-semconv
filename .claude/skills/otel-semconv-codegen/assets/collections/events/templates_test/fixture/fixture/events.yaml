@@ -1,0 +1,17 @@
+file_format: definition/2
+
+# A fixture event, so the event templates have something to render. It references a core registry
+# attribute, so it doesn't depend on the fixture defining attributes of its own. Events imported
+# from the core registry give the templates' provenance filters something to filter out.
+events:
+  - name: fixture.event
+    requirement_level: recommended
+    stability: development
+    brief: A fixture event.
+    attributes:
+      - ref: session.id
+        requirement_level: recommended
+
+imports:
+  events:
+    - "session.*"
